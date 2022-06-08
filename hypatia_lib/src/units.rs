@@ -77,19 +77,27 @@ struct Unit(f64, BTreeMap<BaseUnit, Ratio<i32>>);
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {}",
-            if self.0 == 1.0 {
-                "".to_string()
-            } else {
-                self.0.to_string()
-            },
-            self.1
-                .iter()
-                .map(|(base_unit, ratio)| format!("{}^{} ", base_unit, ratio))
-                .collect::<String>()
-        )
+        let magnitude = if self.0 == 1.0 {
+            "".to_string()
+        } else {
+            format!("{} ", self.0)
+        };
+
+        let units = self
+            .1
+            .iter()
+            .map(|(base_unit, ratio)| {
+                if *ratio == Ratio::new(1i32, 1i32) {
+                    // if we have m^1, just display m
+                    base_unit.to_string()
+                } else {
+                    format!("{}^{}", base_unit, ratio)
+                }
+            })
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        write!(f, "{}{}", magnitude, units)
     }
 }
 
@@ -198,19 +206,15 @@ mod tests {
     }
 
     #[test]
-    fn test() {
-        // 10 000 g * 1 m / (4s*4s) + 20 N
-
+    fn basic_arithmetic() { 
         let m = Quantity(10_000.0, UNITS.get(&'g').unwrap().clone());
         let l = Quantity(1.0, UNITS.get(&'m').unwrap().clone());
         let t = Quantity(4.0, UNITS.get(&'s').unwrap().clone());
         let f = Quantity(20.0, UNITS.get(&'N').unwrap().clone());
+        
+        // 10 000 g * 1 m / (4s*4s) + 20 N
+        let result = m * l / (t.clone() * t) + f;
 
-        let tclone = t.clone();
-        let tt = t * tclone;
-
-        let result = m * l / tt + f;
-
-        println!("{}", result.unwrap());
+        assert_eq!(result.unwrap().to_string(), "20625 g m s^-2")
     }
 }
