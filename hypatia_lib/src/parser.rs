@@ -144,12 +144,3 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
    
 // }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn number() {
-        dbg!(lexer().parse(include_str!("../tests/example.hyp")));
-    }
-}
