@@ -6,7 +6,18 @@ struct Quantity(f64, Unit);
 
 impl fmt::Display for Quantity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.0, self.1)
+        let unit_str = self.1.to_string();
+        if unit_str.is_empty() {
+            write!(f, "{}", self.0)
+        } else {
+            write!(f, "{} {}", self.0, self.1)
+        }
+    }
+}
+
+impl Quantity {
+    fn normalize(self) -> Self {
+        Quantity(self.0 * self.1.0, Unit(1.0, self.1.1))
     }
 }
 
@@ -80,12 +91,15 @@ impl fmt::Display for Unit {
         let magnitude = if self.0 == 1.0 {
             "".to_string()
         } else {
-            format!("{} ", self.0)
+            format!("({}x) ", self.0)
         };
 
-        let units = self
+        if self.1.is_empty() {return write!(f, "{}", magnitude)}
+
+        let positive = self
             .1
             .iter()
+            .filter(|(_, ratio)| *ratio > &Ratio::new(0i32, 1i32))
             .map(|(base_unit, ratio)| {
                 if *ratio == Ratio::new(1i32, 1i32) {
                     // if we have m^1, just display m
@@ -95,9 +109,32 @@ impl fmt::Display for Unit {
                 }
             })
             .collect::<Vec<String>>()
-            .join(" ");
+            .join("");
+        
+        let pos_str = if positive.is_empty() {"1".into()} else {positive};
 
-        write!(f, "{}{}", magnitude, units)
+        let negative = self
+            .1
+            .iter()
+            .filter(|(_, ratio)| *ratio < &Ratio::new(0i32,1i32))
+            .map(|(base_unit, ratio)| {
+                if *ratio == Ratio::new(-1i32, 1i32) {
+                    // if we have m^1, just display m
+                    base_unit.to_string()
+                } else {
+                    format!("{}^{}", base_unit, -ratio)
+                }
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        
+        let unit_str = if (negative.is_empty()) {
+            pos_str
+        } else {
+            format!("{}/{}", pos_str, negative)
+        };
+
+        write!(f, "{}{}", magnitude, unit_str)
     }
 }
 
@@ -212,9 +249,15 @@ mod tests {
         let t = Quantity(4.0, UNITS.get(&'s').unwrap().clone());
         let f = Quantity(20.0, UNITS.get(&'N').unwrap().clone());
         
-        // 10 000 g * 1 m / (4s*4s) + 20 N
+        assert_eq!(&l.to_string(), "1 m");
+        assert_eq!(&m.to_string(), "10000 g");
+        assert_eq!(&f.to_string(), "20 (1000x) gm/s^2");
+        assert_eq!(Quantity(1.0, Unit(1.0, [].into())).to_string(), "1");
+        dbg!(&f.clone().normalize().to_string());
+
+        // 10 000 g * 1 m / (4s*4s) + 20 N = 625 gm/s^2 + 20 000 gm/s^2 = 20625 gm/s^2
         let result = m * l / (t.clone() * t) + f;
 
-        assert_eq!(result.unwrap().to_string(), "20625 g m s^-2")
+        assert_eq!(result.unwrap().to_string(), "20625 gm/s^2");
     }
 }
