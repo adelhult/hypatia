@@ -1,0 +1,38 @@
+// Kommentarer
+x = 20
+f(x) = 20 + x
+
+area_cirkel = {
+    längd = 20m
+    höjden = 30m
+    längd * höjd
+}
+
+unit meter m
+ 
+unit <long_name> <short_name>? (= magnitute? unit_expr?)?
+
+unit foo = 2
+
+
+
+unit gram g = 1;
+
+prefix kilo k = 1000;
+
+kg = 1000 g;
+
+unit kilogram kg = 1000 g;
+
+unit second s = 1;
+unit minute m = 60 s;
+
+top/bot
+
+x = 20 N
+=> Quanity(20_000, Expr<Unit>)
+y = 50 N
+x + y => 70 N
+
+numeric = exempel 123 0x20  0b101 e10 e-20 .2
+quanity = numeric (unit)?
