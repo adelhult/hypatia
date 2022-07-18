@@ -1,8 +1,5 @@
 use chumsky::prelude::*;
-use std::{fmt, collections::HashMap};
-
-pub type Span = std::ops::Range<usize>;
-pub type Spanned<T> = (T, Span);
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
@@ -12,7 +9,7 @@ pub enum Token {
     Unit,
     If,
     Else,
-    Null,
+    Nothing,
     Add,
     Sub,
     Mul,
@@ -45,7 +42,7 @@ impl fmt::Display for Token {
             Token::Unit => write!(f, "unit"),
             Token::If => write!(f, "if"),
             Token::Else => write!(f, "else"),
-            Token::Null => write!(f, "null"),
+            Token::Nothing => write!(f, "nothing"),
             Token::Add => write!(f, "+"),
             Token::Sub => write!(f, "-"),
             Token::Mul => write!(f, "*"),
@@ -71,7 +68,7 @@ impl fmt::Display for Token {
     }
 }
 
-fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
+pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // parse number
     let frac = just('.').chain(text::digits(10));
 
@@ -105,7 +102,8 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         ']' => Token::RBracket,
         ';' => Token::Semicolon,
         ',' => Token::Comma,
-    }.or(text::newline().to(Token::Newline));
+    }
+    .or(text::newline().to(Token::Newline));
 
     // TODO: support more then just c idents
     let ident = text::ident().map(|i: String| match i.as_str() {
@@ -114,7 +112,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         "else" => Token::Else,
         "true" => Token::Bool(true),
         "false" => Token::Bool(false),
-        "null" => Token::Null,
+        "nothing" => Token::Nothing,
         s => Token::Ident(s.into()),
     });
 
@@ -135,12 +133,123 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .repeated()
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Expr {
+    Error,
+    Value(Value),
+    Variable(String),
+    Assignment(String, Box<Spanned<Self>>),
+    Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
+    If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
+    Block(Vec<Spanned<Self>>),
+    BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
+}
 
-// #[derive(Debug, PartialEq, Eq, Hash)]
-// enum Expr {
-// }
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum BinOp {
+    Add,
+    Div,
+    Mul,
+    Sub,
+}
 
-// fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
-   
-// }
+#[derive(Debug, PartialEq)]
+pub enum Value {
+    Nothing,
+    Bool(bool),
+    Number(f64),
+}
 
+pub type Span = std::ops::Range<usize>;
+pub type Spanned<T> = (T, Span);
+
+/// Parses a stream of tokens and create a AST
+///
+/// Inspired by: <https://github.com/zesterer/chumsky/blob/master/examples/nano_rust.rs>
+pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
+    let expr = recursive(|expr| {
+        let value = select! {
+            Token::Nothing => Expr::Value(Value::Nothing),
+            Token::Number(n) => Expr::Value(Value::Number(n.parse().unwrap())),
+            Token::Bool(x) => Expr::Value(Value::Bool(x)),
+        }
+        .labelled("value");
+
+        let ident = select! {Token::Ident(i) => i.clone()}.labelled("identifier");
+
+        // foo, 20.3, bar,
+        let items = expr
+            .clone()
+            .separated_by(just(Token::Comma))
+            .allow_trailing();
+
+        // Assignment
+        let assignment = ident
+            .then_ignore(just(Token::Assignment))
+            .then(expr.clone())
+            .map(|(name, value)| Expr::Assignment(name, Box::new(value)));
+
+        let atom = value
+            .or(assignment)
+            .or(ident.map(Expr::Variable))
+            .map_with_span(|expr, span| (expr, span))
+            // Expression surrounded with parentheses
+            .or(expr
+                .clone()
+                .delimited_by(just(Token::LParen), just(Token::RParen)))
+            // Attempt to recover anything that looks like a parenthesised expression but contains errors
+            .recover_with(nested_delimiters(
+                Token::LParen,
+                Token::RParen,
+                [(Token::LCurly, Token::RCurly)],
+                |span| (Expr::Error, span),
+            ));
+
+        // A function call f(x)
+        let call = atom
+            .then(
+                items
+                    .delimited_by(just(Token::LParen), just(Token::RParen))
+                    .map_with_span(|args, span: Span| (args, span))
+                    .repeated(),
+            )
+            .foldl(|f, args| {
+                let span = f.1.start..args.1.end;
+                (Expr::Call(Box::new(f), args.0), span)
+            });
+
+        // Product operators '*' and '/'
+        let op = just(Token::Mul)
+            .to(BinOp::Mul)
+            .or(just(Token::Div).to(BinOp::Div));
+
+        let product = call
+            .clone()
+            .then(op.then(call).repeated())
+            .foldl(|a, (operator, b)| {
+                let span = a.1.start..b.1.end;
+                (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
+            });
+
+        // Sum operators '+' and '-'
+        let op = just(Token::Add)
+            .to(BinOp::Add)
+            .or(just(Token::Sub).to(BinOp::Sub));
+        let sum = product
+            .clone()
+            .then(op.then(product).repeated())
+            .foldl(|a, (operator, b)| {
+                let span = a.1.start..b.1.end;
+                (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
+            });
+        // FIXME: unary operators and comparison
+        sum
+    });
+
+    let separator = just(Token::Newline).or(just(Token::Semicolon)); // FIXME: handle comments correctly
+
+    expr.padded_by(separator.repeated())
+        .repeated()
+        .then_ignore(end())
+        .map_with_span(|exprs, span| (Expr::Block(exprs), span))
+}

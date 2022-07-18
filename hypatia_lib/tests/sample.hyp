@@ -1,15 +1,14 @@
-// Kommentarer
+// Kommentar
 x = 20
 f(x) = 20 + x
 
 area_cirkel = {
-    längd = 20m
+    längd = 20m  
     höjden = 30m
-    längd * höjd
+    längd * höjd 
 }
 
 unit meter m
- 
 unit <long_name> <short_name>? (= magnitute? unit_expr?)?
 
 unit foo = 2
