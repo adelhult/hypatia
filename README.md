@@ -20,7 +20,7 @@ likely be interacted with using an WASM based notebook environment.
 // SI-units will of course be included in the prelude
 // but they should be easy to define yourself
 unit meter
-unit Ångström := 10^(-10) meter
+unit Ångström = 10^(-10) meter
 
 x = 20 km
 y = 30 m
