@@ -20,24 +20,58 @@ likely be interacted with using an WASM based notebook environment.
 // SI-units will of course be included in the prelude
 // but they should be easy to define yourself
 unit meter
-unit Ångström := 10^(-10) <meter>
+unit Ångström = 10^(-10) meter
 
-x := 20 <km>
-y := 30 <m>
+x = 20 km
+y = 30 m
+z = x + y
 
 binary_literal = 0b10101
-hex_literal = 0x32ab <KiB>
+hex_literal = 0x32ab KiB
 
-f(x) := 10 + x
+// Some examples of functions
+f(x) = 10 + x
 
-is_long_distance(distance) = distance > 20 <km>
+is_long_distance(distance) = distance > 20 km
 
-g(y, z) := {
-  if y < z {
-    z
-  } else {
-    y
-  }
+min(a, b) = if a < b {
+  a
+} else {
+  b
+}
+
+// Curly braces can be used to create a block with its own scope
+area = {
+  length = 20m
+  height = 30m
+  // the last expression of a block will also be the value of the block expression itself
+  length * height 
+}
+
+// Declarations are also expressions
+foo = bar = 20
+
+// Will most likely have some kind of postfix function application
+print(20)
+20 @ print
+
+// All blocks (even in if expressions will introduce their own scope)
+example = 20
+if cond {
+  example = 30
+}
+// that won't change the value of "example"
+// instead use the assigment operator "set"
+example = 20
+if cond {
+  set example = 30
+}
+
+// or more idiomatically use the if expression itself
+example = if cond {
+  30
+} else {
+  20
 }
 ```
 
