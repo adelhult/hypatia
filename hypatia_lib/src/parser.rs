@@ -243,13 +243,59 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
                 (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
             });
         // FIXME: unary operators and comparison
-        sum
+
+        let separator = just(Token::Newline)
+            .or(just(Token::Semicolon))
+            .repeated()
+            .at_least(1); // FIXME: handle comments correctly
+
+        // multiple expressions separated by line breaks or ";".
+        let expressions = expr
+            .clone()
+            .separated_by(separator)
+            .allow_trailing()
+            .allow_leading();
+
+        let block = expressions
+            .delimited_by(just(Token::LCurly), just(Token::RCurly))
+            .map_with_span(|block, span| (Expr::Block(block), span));
+
+        let if_ = recursive(|if_| {
+            just(Token::If)
+                .ignore_then(expr.clone())
+                .then(block.clone())
+                .then(
+                    just(Token::Else)
+                        .ignore_then(block.clone().or(if_))
+                        .or_not(),
+                )
+                .map_with_span(|((cond, a), b), span: Span| {
+                    (
+                        Expr::If(
+                            Box::new(cond),
+                            Box::new(a),
+                            Box::new(match b {
+                                Some(b) => b,
+                                // If an `if` expression has no trailing `else` block, we magic up one that just produces 'nothing'.
+                                None => (Expr::Value(Value::Nothing), span.clone()),
+                            }),
+                        ),
+                        span,
+                    )
+                })
+        });
+
+        block.or(if_).or(sum)
     });
-
-    let separator = just(Token::Newline).or(just(Token::Semicolon)); // FIXME: handle comments correctly
-
-    expr.padded_by(separator.repeated())
+    let separator = just(Token::Newline)
+        .or(just(Token::Semicolon))
         .repeated()
+        .at_least(1);
+
+    expr.clone()
+        .separated_by(separator)
+        .allow_trailing()
+        .allow_leading()
         .then_ignore(end())
-        .map_with_span(|exprs, span| (Expr::Block(exprs), span))
+        .map_with_span(|program, span| (Expr::Block(program), span))
 }
