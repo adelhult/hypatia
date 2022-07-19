@@ -34,12 +34,10 @@ f(x) = 10 + x
 
 is_long_distance(distance) = distance > 20 km
 
-min(a, b) = {
-  if a < b {
-    a
-  } else {
-    b
-  }
+min(a, b) = if a < b {
+  a
+} else {
+  b
 }
 
 // Curly braces can be used to create a block with its own scope
