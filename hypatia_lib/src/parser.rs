@@ -142,6 +142,7 @@ pub enum Expr {
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
     If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
     Block(Vec<Spanned<Self>>),
+    Program(Vec<Spanned<Self>>),
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
 }
 
@@ -153,7 +154,7 @@ pub enum BinOp {
     Sub,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Nothing,
     Bool(bool),
@@ -297,5 +298,5 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         .allow_trailing()
         .allow_leading()
         .then_ignore(end())
-        .map_with_span(|program, span| (Expr::Block(program), span))
+        .map_with_span(|program, span| (Expr::Program(program), span))
 }

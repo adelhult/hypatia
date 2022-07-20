@@ -1,5 +1,9 @@
+mod error;
+mod eval;
 mod parser;
 mod units;
+pub use error::Error;
+pub use eval::{eval_expr, Environment};
 pub use parser::*;
 
 #[cfg(test)]
@@ -18,6 +22,8 @@ mod tests {
             let (ast, parse_errors) =
                 parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
             println!("ast: {ast:?},\n parser errors: {parse_errors:?}");
+            let mut env = Environment::new();
+            println!("{:?}", eval_expr(&ast.unwrap(), &mut env));
         }
     }
 }
