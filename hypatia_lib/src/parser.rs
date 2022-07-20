@@ -168,6 +168,12 @@ pub type Spanned<T> = (T, Span);
 ///
 /// Inspired by: <https://github.com/zesterer/chumsky/blob/master/examples/nano_rust.rs>
 pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
+    let separator = just(Token::Newline)
+        .or(just(Token::Semicolon))
+        .or(just(Token::Comment))
+        .repeated()
+        .at_least(1);
+
     let expr = recursive(|expr| {
         let value = select! {
             Token::Nothing => Expr::Value(Value::Nothing),
@@ -176,7 +182,7 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
         }
         .labelled("value");
 
-        let ident = select! {Token::Ident(i) => i.clone()}.labelled("identifier");
+        let ident = select! {Token::Ident(i) => i}.labelled("identifier");
 
         // foo, 20.3, bar,
         let items = expr
@@ -245,15 +251,10 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
             });
         // FIXME: unary operators and comparison
 
-        let separator = just(Token::Newline)
-            .or(just(Token::Semicolon))
-            .repeated()
-            .at_least(1); // FIXME: handle comments correctly
-
         // multiple expressions separated by line breaks or ";".
         let expressions = expr
             .clone()
-            .separated_by(separator)
+            .separated_by(separator.clone())
             .allow_trailing()
             .allow_leading();
 
@@ -288,10 +289,6 @@ pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Cl
 
         block.or(if_).or(sum)
     });
-    let separator = just(Token::Newline)
-        .or(just(Token::Semicolon))
-        .repeated()
-        .at_least(1);
 
     expr.clone()
         .separated_by(separator)
