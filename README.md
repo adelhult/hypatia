@@ -5,11 +5,11 @@ Physical quantities and unit conversions is a central part of the language. Anot
 focus is the ability to evaluate your expressions into LaTeX text strings. The language will most 
 likely be interacted with using an WASM based notebook environment.
 
-## Features
-* Quantities
-* Hex and binary literals
-* String interpolation
-* LaTeX representation
+## A feature highlight
+* Quantities `10km + 20m`
+* Hex and binary literals `0x20 bytes + 0b101 kbit`
+* String interpolation `"hello \(name)!"` 
+* LaTeX pretty printing `x = 20 km` => `x = 20\,\text{km}`
 
 ## Ideas for syntax and semantics
 ```
@@ -27,11 +27,13 @@ y = 30 m
 z = x + y
 
 binary_literal = 0b10101
-hex_literal = 0x32ab KiB
+hex_literal = 0x32ab bytes
+scientific_form = 15.3e2
 
 // Some examples of functions
 f(x) = 10 + x
 
+// Easy to declare functions
 is_long_distance(distance) = distance > 20 km
 
 min(a, b) = if a < b {
@@ -48,26 +50,27 @@ area = {
   length * height 
 }
 
-// Declarations are also expressions
+// Everything in the language is an expression
 foo = bar = 20
 
 // Will most likely have some kind of postfix function application
 print(20)
 20 @ print
+20 |> print
 
-// All blocks (even in if expressions will introduce their own scope)
+// All blocks (curly braces), including in if expressions will introduce their own scope
 example = 20
 if cond {
   example = 30
 }
-// that won't change the value of "example"
-// instead use the assigment operator "set"
+// That won't change the value of "example"
+// instead use the assigment operator "update"
 example = 20
 if cond {
-  set example = 30
+  update example = 30
 }
 
-// or more idiomatically use the if expression itself
+// ...or more idiomatically use the if expression itself
 example = if cond {
   30
 } else {
