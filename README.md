@@ -5,6 +5,8 @@ Physical quantities and unit conversions is a central part of the language. Anot
 focus is the ability to evaluate your expressions into LaTeX text strings. The language will most 
 likely be interacted with using an WASM based notebook environment.
 
+Still super early but this is [the plan](https://github.com/adelhult/Hypatia/issues/1), we will see how much I will work on this, but it would be nice to have working prototype. 
+
 ## A feature highlight
 * Quantities `10km + 20m`
 * Hex and binary literals `0x20 bytes + 0b101 kbit`
