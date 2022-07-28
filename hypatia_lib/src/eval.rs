@@ -5,26 +5,39 @@ use crate::{
 use std::collections::HashMap;
 
 pub struct Environment {
-    variables: HashMap<String, Value>,
+    variables: Vec<HashMap<String, Value>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Environment {
-            variables: HashMap::new(),
+            variables: vec![HashMap::new()],
         }
     }
 
     fn get_var(&self, name: &str) -> Result<Value, Error> {
-        self.variables
-            .get(name)
-            .cloned()
-            .ok_or_else(|| Error::UnknownName(name.to_string()))
+        for scope in self.variables.iter().rev() {
+            if let Some(value) = scope.get(name).cloned() {
+                return Ok(value);
+            }
+        }
+        Err(Error::UnknownName(name.to_string()))
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<Value, Error> {
-        self.variables.insert(name.to_string(), value.clone());
+        self.variables
+            .last_mut()
+            .expect("No scope exists")
+            .insert(name.to_string(), value.clone());
         Ok(value.clone())
+    }
+
+    fn push_scope(&mut self) {
+        self.variables.push(HashMap::new());
+    }
+
+    fn pop_scope(&mut self) {
+        self.variables.pop();
     }
 }
 
@@ -74,7 +87,12 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 eval(b, env)
             }
         }
-        Expr::Block(expressions) => eval_block(expressions, env), // FIXME: create a new scope
+        Expr::Block(expressions) => {
+            env.push_scope();
+            let block_result = eval_block(expressions, env);
+            env.pop_scope();
+            block_result
+        }
         Expr::Program(expressions) => eval_block(expressions, env),
         Expr::BinOp(op, a, b) => {
             let a = eval(a, env)?.number()?;

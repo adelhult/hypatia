@@ -32,3 +32,8 @@ fn if_else() {
 fn if_nothing() {
     run_test_file(Path::new("./samples/if_nothing.hyp"));
 }
+
+#[test]
+fn scopes() {
+    run_test_file(Path::new("./samples/scopes.hyp"));
+}
