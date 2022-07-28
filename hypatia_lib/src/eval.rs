@@ -52,7 +52,7 @@ impl Value {
         match self {
             Value::Nothing => Ok(false),
             Value::Bool(b) => Ok(*b),
-            Value::Number(n) => Err(Error::InvalidType),
+            Value::Number(_) => Err(Error::InvalidType),
         }
     }
 
