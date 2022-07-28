@@ -1,0 +1,15 @@
+// Comments are written using two forwards slashes
+// New variables can be declared with an equal sign
+x = 20
+
+// Curly braces create blocks with their own scope
+area = {
+    height = 20
+    width = 3.0
+    height * width
+}
+
+x + area
+// 20 * 3 + 20 = 80
+// Result:
+80

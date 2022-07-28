@@ -1,8 +1,46 @@
-use chumsky::prelude::*;
+use crate::Error;
+use chumsky::{prelude::*, Stream};
 use std::fmt;
 
+/// Parse some source text into an abstract syntax tree of Expr nodes
+pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
+    let (tokens, lexing_errors) = lexer().parse_recovery(source);
+
+    // Convert the lexing errors into the Hypatia errors
+    let lexing_errors = lexing_errors
+        .into_iter()
+        .map(|err| err.map(|c| c.to_string()))
+        .map(Error::Parsing);
+
+    // return the errors if we can't continue with parsing
+    if tokens.is_none() {
+        return Err(lexing_errors.collect());
+    }
+
+    // Parse the stream of tokens
+    let len = source.chars().count();
+    let (ast, parsing_errors) =
+        parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.unwrap().into_iter()));
+
+    // If there are errors, return them
+    if parsing_errors.len() + lexing_errors.len() > 0 {
+        return Err(lexing_errors
+            .chain(
+                parsing_errors
+                    .into_iter()
+                    .map(|err| Error::Parsing(err.map(|token| token.to_string()))),
+            )
+            .collect());
+    }
+
+    // Or if everything was successful, return the ast!
+    // Note: the unwrap is safe since chumsky parse_recovery promises that there
+    // will be at least one error if it fails to produce a ast
+    Ok(ast.unwrap())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Token {
+enum Token {
     Ident(String),
     Number(String),
     Bool(bool),
@@ -68,7 +106,7 @@ impl fmt::Display for Token {
     }
 }
 
-pub fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
+fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // parse number
     let frac = just('.').chain(text::digits(10));
 
@@ -161,13 +199,23 @@ pub enum Value {
     Number(f64),
 }
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Nothing => write!(f, "nothing"),
+            Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
+            Value::Number(n) => write!(f, "{n}"),
+        }
+    }
+}
+
 pub type Span = std::ops::Range<usize>;
 pub type Spanned<T> = (T, Span);
 
 /// Parses a stream of tokens and create a AST
 ///
 /// Inspired by: <https://github.com/zesterer/chumsky/blob/master/examples/nano_rust.rs>
-pub fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
+fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
     let separator = just(Token::Newline)
         .or(just(Token::Semicolon))
         .or(just(Token::Comment))

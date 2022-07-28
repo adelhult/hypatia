@@ -1,6 +1,9 @@
+use chumsky::prelude::Simple;
+
 #[derive(Debug)]
 pub enum Error {
-    Parser,
+    Parsing(Simple<String>),
+    ErrorNode,
     UnknownName(String),
     InvalidType,
 }

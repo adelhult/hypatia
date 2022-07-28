@@ -1,9 +1,0 @@
-// Example program
-x = 20
-// A more complex expression:
-area = {
-    height = 20
-    width = 3.0
-    height * width
-}
-x + area

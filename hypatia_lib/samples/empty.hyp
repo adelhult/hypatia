@@ -1,0 +1,3 @@
+// An empty document should evaluate to "nothing". 
+// Result:
+nothing

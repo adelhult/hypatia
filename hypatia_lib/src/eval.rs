@@ -1,4 +1,7 @@
-use crate::{BinOp, Error, Expr, Spanned, Value};
+use crate::{
+    parser::{BinOp, Spanned},
+    Error, Expr, Value,
+};
 use std::collections::HashMap;
 
 pub struct Environment {
@@ -52,34 +55,35 @@ impl Value {
     }
 }
 
-pub fn eval_expr((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, Error> {
+/// Evaluate an AST of Expr nodes into a Value
+pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, Error> {
     match &expr {
-        Expr::Error => Err(Error::Parser),
+        Expr::Error => Err(Error::ErrorNode),
         Expr::Value(value) => Ok(value.clone()),
         Expr::Variable(name) => env.get_var(name),
         Expr::Assignment(name, e) => {
-            let value = eval_expr(e, env)?;
+            let value = eval(e, env)?;
             env.declare_var(name, &value)
         }
         Expr::Call(_, _) => todo!(),
         Expr::If(cond, a, b) => {
-            let cond = eval_expr(cond, env)?;
+            let cond = eval(cond, env)?;
             if cond.is_true()? {
-                eval_expr(a, env)
+                eval(a, env)
             } else {
-                eval_expr(b, env)
+                eval(b, env)
             }
         }
         Expr::Block(expressions) => eval_block(expressions, env), // FIXME: create a new scope
         Expr::Program(expressions) => eval_block(expressions, env),
         Expr::BinOp(op, a, b) => {
-            let a = eval_expr(a, env)?.number()?;
-            let b = eval_expr(b, env)?.number()?;
+            let a = eval(a, env)?.number()?;
+            let b = eval(b, env)?.number()?;
             Ok(match op {
-                crate::BinOp::Add => Value::Number(a + b),
-                crate::BinOp::Div => Value::Number(a / b),
-                crate::BinOp::Mul => Value::Number(a * b),
-                crate::BinOp::Sub => Value::Number(a - b),
+                BinOp::Add => Value::Number(a + b),
+                BinOp::Div => Value::Number(a / b),
+                BinOp::Mul => Value::Number(a * b),
+                BinOp::Sub => Value::Number(a - b),
             })
         }
     }
@@ -89,9 +93,9 @@ fn eval_block(expressions: &Vec<Spanned<Expr>>, env: &mut Environment) -> Result
     for (i, expr) in expressions.iter().enumerate() {
         // The last expression of the block will be return value for the block expression itself
         if expressions.len() - 1 == i {
-            return eval_expr(expr, env);
+            return eval(expr, env);
         }
-        eval_expr(expr, env)?;
+        eval(expr, env)?;
     }
     Ok(Value::Nothing)
 }
