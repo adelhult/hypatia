@@ -1,0 +1,7 @@
+if false {
+    2
+}
+// A if expression with no else clause will 
+// return "nothing" if the condition is false.
+// Result:
+nothing

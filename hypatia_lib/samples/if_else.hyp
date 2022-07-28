@@ -1,0 +1,7 @@
+if true {
+    20
+} else {
+    30
+}
+// Result:
+20

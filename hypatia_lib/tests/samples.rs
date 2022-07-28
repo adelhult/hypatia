@@ -22,3 +22,13 @@ fn empty() {
 fn simple() {
     run_test_file(Path::new("./samples/simple.hyp"));
 }
+
+#[test]
+fn if_else() {
+    run_test_file(Path::new("./samples/if_else.hyp"));
+}
+
+#[test]
+fn if_nothing() {
+    run_test_file(Path::new("./samples/if_nothing.hyp"));
+}
