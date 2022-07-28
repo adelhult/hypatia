@@ -1,8 +1,5 @@
 use hypatia_lib::{eval, parse, Environment};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{fs, path::Path};
 
 // TODO: Add support for testing error outputs as well
 fn run_test_file(source_file: &Path) {
@@ -18,10 +15,10 @@ fn run_test_file(source_file: &Path) {
 
 #[test]
 fn empty() {
-    run_test_file(&PathBuf::from("./samples/empty.hyp"));
+    run_test_file(Path::new("./samples/empty.hyp"));
 }
 
 #[test]
 fn simple() {
-    run_test_file(&PathBuf::from("./samples/simple.hyp"));
+    run_test_file(Path::new("./samples/simple.hyp"));
 }
