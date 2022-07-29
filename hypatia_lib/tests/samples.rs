@@ -37,3 +37,8 @@ fn if_nothing() {
 fn scopes() {
     run_test_file(Path::new("./samples/scopes.hyp"));
 }
+
+#[test]
+fn update() {
+    run_test_file(Path::new("./samples/update.hyp"));
+}

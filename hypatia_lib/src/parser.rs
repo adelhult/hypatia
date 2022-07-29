@@ -45,6 +45,7 @@ enum Token {
     Number(String),
     Bool(bool),
     Unit,
+    Update,
     If,
     Else,
     Nothing,
@@ -80,6 +81,7 @@ impl fmt::Display for Token {
             Token::Unit => write!(f, "unit"),
             Token::If => write!(f, "if"),
             Token::Else => write!(f, "else"),
+            Token::Update => write!(f, "update"),
             Token::Nothing => write!(f, "nothing"),
             Token::Add => write!(f, "+"),
             Token::Sub => write!(f, "-"),
@@ -148,6 +150,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         "unit" => Token::Unit,
         "if" => Token::If,
         "else" => Token::Else,
+        "update" => Token::Update,
         "true" => Token::Bool(true),
         "false" => Token::Bool(false),
         "nothing" => Token::Nothing,
@@ -176,7 +179,8 @@ pub enum Expr {
     Error,
     Value(Value),
     Variable(String),
-    Assignment(String, Box<Spanned<Self>>),
+    VarDeclaration(String, Box<Spanned<Self>>),
+    VarUpdate(String, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
     If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
     Block(Vec<Spanned<Self>>),
@@ -238,14 +242,26 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             .separated_by(just(Token::Comma))
             .allow_trailing();
 
-        // Assignment
+        // General variable assignment syntax
+        // x = 20
         let assignment = ident
             .then_ignore(just(Token::Assignment))
-            .then(expr.clone())
-            .map(|(name, value)| Expr::Assignment(name, Box::new(value)));
+            .then(expr.clone());
+
+        // Syntax for updating a variable
+        // update x = 20
+        let var_update = just(Token::Update)
+            .ignore_then(assignment.clone())
+            .map(|(name, value)| Expr::VarUpdate(name, Box::new(value)));
+
+        // Syntax for declaring new variables
+        // x = 20
+        let var_declaration =
+            assignment.map(|(name, value)| Expr::VarDeclaration(name, Box::new(value)));
 
         let atom = value
-            .or(assignment)
+            .or(var_update)
+            .or(var_declaration)
             .or(ident.map(Expr::Variable))
             .map_with_span(|expr, span| (expr, span))
             // Expression surrounded with parentheses

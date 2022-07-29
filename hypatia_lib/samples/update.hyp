@@ -1,0 +1,8 @@
+x = 10
+update x = 20
+{
+    update x = 30
+}
+x
+// Result:
+30

@@ -24,12 +24,23 @@ impl Environment {
         Err(Error::UnknownName(name.to_string()))
     }
 
-    fn declare_var(&mut self, name: &str, value: &Value) -> Result<Value, Error> {
+    fn update_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
+        for scope in self.variables.iter_mut().rev() {
+            if !scope.contains_key(name) {
+                continue;
+            }
+            scope.insert(name.to_string(), value.clone());
+            return Ok(());
+        }
+        Err(Error::UpdateNonExistentVar(name.to_string()))
+    }
+
+    fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
         self.variables
             .last_mut()
             .expect("No scope exists")
             .insert(name.to_string(), value.clone());
-        Ok(value.clone())
+        Ok(())
     }
 
     fn push_scope(&mut self) {
@@ -74,9 +85,15 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         Expr::Error => Err(Error::ErrorNode),
         Expr::Value(value) => Ok(value.clone()),
         Expr::Variable(name) => env.get_var(name),
-        Expr::Assignment(name, e) => {
-            let value = eval(e, env)?;
-            env.declare_var(name, &value)
+        Expr::VarDeclaration(name, rhs) => {
+            let value = eval(rhs, env)?;
+            env.declare_var(name, &value)?;
+            Ok(value)
+        }
+        Expr::VarUpdate(name, rhs) => {
+            let value = eval(rhs, env)?;
+            env.update_var(name, &value)?;
+            Ok(value)
         }
         Expr::Call(_, _) => todo!(),
         Expr::If(cond, a, b) => {

@@ -5,5 +5,6 @@ pub enum Error {
     Parsing(Simple<String>),
     ErrorNode,
     UnknownName(String),
+    UpdateNonExistentVar(String),
     InvalidType,
 }
