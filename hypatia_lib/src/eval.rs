@@ -1,3 +1,4 @@
+use crate::expr::Literal;
 use crate::units::BaseUnit;
 use crate::{
     expr::{BinOp, Spanned},
@@ -78,7 +79,7 @@ impl Default for Environment {
 pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, Error> {
     match &expr {
         Expr::Error => Err(Error::ErrorNode),
-        Expr::Value(value) => Ok(value.clone()),
+        Expr::Literal(literal) => eval_literal(literal, env),
         Expr::Variable(name) => env.get_var(name),
         Expr::VarDeclaration(name, rhs) => {
             let value = eval(rhs, env)?;
@@ -132,4 +133,16 @@ fn eval_block(expressions: &Vec<Spanned<Expr>>, env: &mut Environment) -> Result
         eval(expr, env)?;
     }
     Ok(Value::Nothing)
+}
+
+fn eval_literal(literal: &Literal, _env: &mut Environment) -> Result<Value, Error> {
+    Ok(match literal {
+        Literal::Nothing => Value::Nothing,
+        Literal::Bool(b) => Value::Bool(*b),
+        Literal::Quantity(magnitude, _unit_name) => {
+            // FIXME: do a lookup and find the unit, should return something called
+            // Value::Quantity instead of Value::Number
+            Value::Number(*magnitude)
+        }
+    })
 }

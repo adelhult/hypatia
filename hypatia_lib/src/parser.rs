@@ -186,15 +186,22 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         .at_least(1);
 
     let expr = recursive(|expr| {
-        let value = select! {
-            Token::Nothing => Expr::Value(Value::Nothing),
-            Token::Number(n) => Expr::Value(Value::Number(n.parse().unwrap())),
-            Token::Bool(x) => Expr::Value(Value::Bool(x)),
-        }
-        .labelled("value");
-        // FIXME: Replace Number with quantity which is "number (unit expression)?"
-
         let ident = select! {Token::Ident(i) => i}.labelled("identifier");
+
+        let number = select! {
+            Token::Number(n) => n.parse().expect("Could not parse number")
+        };
+
+        let quantity = number
+            .then(ident.or_not())
+            .map(|(number, unit)| Expr::Literal(Literal::Quantity(number, unit)));
+
+        let value = select! {
+            Token::Nothing => Expr::Literal(Literal::Nothing),
+            Token::Bool(x) => Expr::Literal(Literal::Bool(x)),
+        }
+        .or(quantity)
+        .labelled("value");
 
         // foo, 20.3, bar,
         let items = expr
@@ -311,7 +318,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                             Box::new(match b {
                                 Some(b) => b,
                                 // If an `if` expression has no trailing `else` block, we magic up one that just produces 'nothing'.
-                                None => (Expr::Value(Value::Nothing), span.clone()),
+                                None => (Expr::Literal(Literal::Nothing), span.clone()),
                             }),
                         ),
                         span,

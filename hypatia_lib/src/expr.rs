@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     Error,
-    Value(Value),
+    Literal(Literal),
     Variable(String),
     VarDeclaration(String, Box<Spanned<Self>>),
     VarUpdate(String, Box<Spanned<Self>>),
@@ -22,6 +22,13 @@ pub enum BinOp {
     Div,
     Mul,
     Sub,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Literal {
+    Nothing,
+    Bool(bool),
+    Quantity(f64, Option<String>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

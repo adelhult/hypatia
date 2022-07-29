@@ -1,3 +1,6 @@
+// quantities should be able to be written like this
+x = 20miles
+y = 30 A
 unit meter m
 // Result:
 nothing
