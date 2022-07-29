@@ -154,7 +154,7 @@ impl fmt::Display for Unit {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
-struct BaseUnit(String, Option<String>);
+pub struct BaseUnit(pub String, pub Option<String>);
 
 impl fmt::Display for BaseUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

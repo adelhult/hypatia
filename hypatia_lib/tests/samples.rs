@@ -10,7 +10,7 @@ fn run_test_file(source_file: &Path) {
     let ast = parse(source).expect("Failed to parse the source text");
     let mut env = Environment::default();
     let value = eval(&ast, &mut env).expect("Failed to evaluate the expression");
-    assert_eq!(result.trim(), &format!("{value}"))
+    assert_eq!(result.trim(), &format!("{value}"));
 }
 
 #[test]
@@ -41,4 +41,9 @@ fn scopes() {
 #[test]
 fn update() {
     run_test_file(Path::new("./samples/update.hyp"));
+}
+
+#[test]
+fn base_units() {
+    run_test_file(Path::new("./samples/base_units.hyp"));
 }

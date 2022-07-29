@@ -186,6 +186,7 @@ pub enum Expr {
     Block(Vec<Spanned<Self>>),
     Program(Vec<Spanned<Self>>),
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
+    BaseUnitDeclaration(String, Option<String>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -233,6 +234,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             Token::Bool(x) => Expr::Value(Value::Bool(x)),
         }
         .labelled("value");
+        // FIXME: Replace Number with quantity which is "number (unit expression)?"
 
         let ident = select! {Token::Ident(i) => i}.labelled("identifier");
 
@@ -259,9 +261,17 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         let var_declaration =
             assignment.map(|(name, value)| Expr::VarDeclaration(name, Box::new(value)));
 
+        // Unit declarations
+        // unit longName (shortName)? (= quantity)?
+        let unit_declaration = just(Token::Unit)
+            .ignore_then(ident)
+            .then(ident.or_not())
+            .map(|(long_name, short_name)| Expr::BaseUnitDeclaration(long_name, short_name));
+
         let atom = value
             .or(var_update)
             .or(var_declaration)
+            .or(unit_declaration)
             .or(ident.map(Expr::Variable))
             .map_with_span(|expr, span| (expr, span))
             // Expression surrounded with parentheses

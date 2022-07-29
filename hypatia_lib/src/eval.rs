@@ -1,17 +1,21 @@
+use crate::units::BaseUnit;
 use crate::{
     parser::{BinOp, Spanned},
     Error, Expr, Value,
 };
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
+    base_units: Vec<Vec<BaseUnit>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Environment {
             variables: vec![HashMap::new()],
+            base_units: vec![vec![BaseUnit("Unitless".to_string(), Some("".to_string()))]],
         }
     }
 
@@ -40,6 +44,18 @@ impl Environment {
             .last_mut()
             .expect("No scope exists")
             .insert(name.to_string(), value.clone());
+        Ok(())
+    }
+
+    fn declare_base_unit(
+        &mut self,
+        long_name: &str,
+        short_name: &Option<String>,
+    ) -> Result<(), Error> {
+        self.base_units
+            .last_mut()
+            .expect("No scope exists")
+            .push(BaseUnit(long_name.to_string(), short_name.clone()));
         Ok(())
     }
 
@@ -120,6 +136,10 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 BinOp::Mul => Value::Number(a * b),
                 BinOp::Sub => Value::Number(a - b),
             })
+        }
+        Expr::BaseUnitDeclaration(long_name, short_name) => {
+            env.declare_base_unit(long_name, short_name)?;
+            Ok(Value::Nothing)
         }
     }
 }
