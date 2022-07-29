@@ -154,11 +154,19 @@ impl fmt::Display for Unit {
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
-struct BaseUnit(String, String);
+struct BaseUnit(String, Option<String>);
 
 impl fmt::Display for BaseUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.1)
+        write!(
+            f,
+            "{}",
+            if let Some(short_name) = &self.1 {
+                short_name
+            } else {
+                &self.0
+            }
+        )
     }
 }
 
@@ -216,9 +224,9 @@ mod tests {
 
     lazy_static! {
         static ref BASE_UNITS: HashMap<char, BaseUnit> = HashMap::from([
-            ('m', BaseUnit("meter".to_string(), "m".to_string())),
-            ('g', BaseUnit("gram".to_string(), "g".to_string())),
-            ('s', BaseUnit("second".to_string(), "s".to_string()))
+            ('m', BaseUnit("meter".to_string(), Some("m".to_string()))),
+            ('g', BaseUnit("gram".to_string(), Some("g".to_string()))),
+            ('s', BaseUnit("second".to_string(), Some("s".to_string())))
         ]);
         static ref UNITS: HashMap<char, Unit> = HashMap::from([
             ('0', Unit(1.0, [].into())),
