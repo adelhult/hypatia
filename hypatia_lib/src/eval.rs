@@ -1,6 +1,6 @@
 use crate::units::BaseUnit;
 use crate::{
-    parser::{BinOp, Spanned},
+    expr::{BinOp, Spanned},
     Error, Expr, Value,
 };
 use std::collections::HashMap;
@@ -71,27 +71,6 @@ impl Environment {
 impl Default for Environment {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl Value {
-    fn is_true(&self) -> Result<bool, Error> {
-        match self {
-            Value::Nothing => Ok(false),
-            Value::Bool(b) => Ok(*b),
-            Value::Number(_) => Err(Error::InvalidType),
-        }
-    }
-
-    fn is_false(&self) -> Result<bool, Error> {
-        Ok(!self.is_true()?)
-    }
-
-    fn number(&self) -> Result<f64, Error> {
-        match self {
-            Value::Number(n) => Ok(*n),
-            _ => Err(Error::InvalidType),
-        }
     }
 }
 

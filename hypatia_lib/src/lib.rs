@@ -13,8 +13,10 @@ assert_eq!(value, Value::Number(42.0));
 */
 mod error;
 mod eval;
+mod expr;
 mod parser;
 mod units;
 pub use error::Error;
 pub use eval::*;
-pub use parser::{parse, Expr, Value};
+pub use expr::{Expr, Value};
+pub use parser::parse;

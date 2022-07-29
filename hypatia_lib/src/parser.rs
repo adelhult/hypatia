@@ -1,3 +1,4 @@
+use crate::expr::*;
 use crate::Error;
 use chumsky::{prelude::*, Stream};
 use std::fmt;
@@ -173,49 +174,6 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .padded_by(whitespace)
         .repeated()
 }
-
-#[derive(Debug, PartialEq)]
-pub enum Expr {
-    Error,
-    Value(Value),
-    Variable(String),
-    VarDeclaration(String, Box<Spanned<Self>>),
-    VarUpdate(String, Box<Spanned<Self>>),
-    Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
-    If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
-    Block(Vec<Spanned<Self>>),
-    Program(Vec<Spanned<Self>>),
-    BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
-    BaseUnitDeclaration(String, Option<String>),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum BinOp {
-    Add,
-    Div,
-    Mul,
-    Sub,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Value {
-    Nothing,
-    Bool(bool),
-    Number(f64),
-}
-
-impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Value::Nothing => write!(f, "nothing"),
-            Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
-            Value::Number(n) => write!(f, "{n}"),
-        }
-    }
-}
-
-pub type Span = std::ops::Range<usize>;
-pub type Spanned<T> = (T, Span);
 
 /// Parses a stream of tokens and create a AST
 ///
