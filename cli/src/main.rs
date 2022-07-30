@@ -15,6 +15,7 @@ fn get_input() -> Option<String> {
         let indent = "   ".repeat(open_blocks);
         let line: String = Input::new().with_initial_text(indent).interact().ok()?;
         result.push_str(&line);
+        result.push('\n');
         // If we are not waiting for closing a curly
         open_blocks += line.matches('{').count();
         open_blocks -= line.matches('}').count();
