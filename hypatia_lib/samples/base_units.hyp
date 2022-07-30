@@ -1,4 +1,6 @@
 // quantities should be able to be written like this
 unit meter m
+x = 10 meter
+y = 2 m
 // Result:
-nothing
+2 m

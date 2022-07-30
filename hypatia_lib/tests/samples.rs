@@ -52,3 +52,8 @@ fn base_units() {
 fn unit_arithmetic() {
     run_test_file(Path::new("./samples/unit_arithmetic.hyp"));
 }
+
+#[test]
+fn derived_units() {
+    run_test_file(Path::new("./samples/derived_units.hyp"));
+}

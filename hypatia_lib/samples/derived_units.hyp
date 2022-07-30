@@ -1,0 +1,8 @@
+unit meter m 
+unit foo = 2 m
+unit bar = 3 foo * 2 m
+1 bar
+// This is the same as saying 
+// 3 * 2 m * 2 m =  12 m^2
+// Result:
+1 (12x) m^2

@@ -114,6 +114,41 @@ impl Environment {
         Ok(())
     }
 
+    fn declare_unit(
+        &mut self,
+        long_name: &str,
+        short_name: &Option<String>,
+        derivation: Option<&Value>,
+    ) -> Result<(), Error> {
+        let derived_unit;
+
+        // handle derived units
+        // unit mile mi = 1 609.344 m
+        if let Some(value) = derivation {
+            if let Value::Quantity(Quantity(mag, unit)) = value {
+                derived_unit = Unit(mag * unit.0, unit.1.clone());
+            } else {
+                // The rhs must also be quantity otherwise we
+                // can't derive the new unit in any sensible way
+                return Err(Error::InvalidType);
+            }
+        } else {
+            // In the case of a base unit, just make a derived unit consisting of the base unit scaled by 1
+            let base_unit = BaseUnit(long_name.to_string(), short_name.clone());
+            derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
+        }
+
+        let current_scope = self.units.last_mut().expect("No scope exists");
+
+        if let Some(name) = short_name {
+            current_scope.insert(name.clone(), derived_unit.clone());
+        }
+
+        current_scope.insert(long_name.to_string(), derived_unit);
+
+        Ok(())
+    }
+
     fn get_unit(&self, name: &str) -> Result<Unit, Error> {
         for scope in self.units.iter().rev() {
             if let Some(value) = scope.get(name).cloned() {
@@ -180,8 +215,13 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 BinOp::Mul => a * b,
             }))
         }
-        Expr::BaseUnitDeclaration(long_name, short_name) => {
+        Expr::BaseUnitDecl(long_name, short_name) => {
             env.declare_base_unit(long_name, short_name)?;
+            Ok(Value::Nothing)
+        }
+        Expr::DerivedUnitDecl(long_name, short_name, expr) => {
+            let value = eval(expr, env)?;
+            env.declare_unit(long_name, short_name, Some(&value))?;
             Ok(Value::Nothing)
         }
     }

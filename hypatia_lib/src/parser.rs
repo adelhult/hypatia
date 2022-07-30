@@ -226,17 +226,28 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         let var_declaration =
             assignment.map(|(name, value)| Expr::VarDeclaration(name, Box::new(value)));
 
-        // Unit declarations
-        // unit longName (shortName)? (= quantity)?
-        let unit_declaration = just(Token::Unit)
-            .ignore_then(ident)
-            .then(ident.or_not())
-            .map(|(long_name, short_name)| Expr::BaseUnitDeclaration(long_name, short_name));
+        // General syntax for unit declarations
+        let unit_decl = just(Token::Unit).ignore_then(ident).then(ident.or_not());
+
+        // unit meter m
+        let base_unit_decl = unit_decl
+            .clone()
+            .map(|(long_name, short_name)| Expr::BaseUnitDecl(long_name, short_name));
+
+        // derived units also has a right hand side
+        // unit mile mi = 1609.344 m
+        let derived_unit_decl = unit_decl
+            .then_ignore(just(Token::Assignment))
+            .then(expr.clone())
+            .map(|((long_name, short_name), expr)| {
+                Expr::DerivedUnitDecl(long_name, short_name, Box::new(expr))
+            });
 
         let atom = value
             .or(var_update)
             .or(var_declaration)
-            .or(unit_declaration)
+            .or(derived_unit_decl)
+            .or(base_unit_decl)
             .or(ident.map(Expr::Variable))
             .map_with_span(|expr, span| (expr, span))
             // Expression surrounded with parentheses

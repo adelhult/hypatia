@@ -19,11 +19,11 @@ impl fmt::Display for Quantity {
 }
 
 impl Quantity {
-    fn normalize(self) -> Self {
+    pub fn normalize(self) -> Self {
         Quantity(self.0 * self.1 .0, Unit(1.0, self.1 .1))
     }
 
-    fn try_convert(&self, target_unit: Unit) -> Option<Self> {
+    pub fn try_convert(&self, target_unit: Unit) -> Option<Self> {
         if self.1 .1 != target_unit.1 {
             None
         } else {
