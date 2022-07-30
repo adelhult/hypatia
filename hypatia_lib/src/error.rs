@@ -7,4 +7,5 @@ pub enum Error {
     UnknownName(String),
     UpdateNonExistentVar(String),
     InvalidType,
+    InvalidUnitOperation,
 }

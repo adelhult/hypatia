@@ -1,0 +1,6 @@
+unit meter m
+x = 5m + 5m
+y = 2 meter
+(x * y) / 1 meter
+// Result:
+20 m

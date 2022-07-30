@@ -2,8 +2,10 @@ use std::{collections::BTreeMap, fmt, ops};
 
 use num::rational::Ratio;
 
-#[derive(Clone, Debug)]
-struct Quantity(f64, Unit);
+use crate::Error;
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Quantity(pub f64, pub Unit);
 
 impl fmt::Display for Quantity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -31,17 +33,17 @@ impl Quantity {
 }
 
 impl ops::Add for Quantity {
-    type Output = Option<Self>;
+    type Output = Result<Self, Error>;
 
     fn add(self, rhs: Self) -> Self::Output {
         let Quantity(mag1, Unit(scale1, powers1)) = self;
         let Quantity(mag2, Unit(scale2, powers2)) = rhs;
 
         if powers1 != powers2 {
-            return None;
+            return Err(Error::InvalidUnitOperation);
         }
 
-        Some(Quantity(
+        Ok(Quantity(
             // normalize to scale1
             mag1 + (mag2 * scale2 / scale1),
             Unit(scale1, powers1),
@@ -50,17 +52,17 @@ impl ops::Add for Quantity {
 }
 
 impl ops::Sub for Quantity {
-    type Output = Option<Self>;
+    type Output = Result<Self, Error>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         let Quantity(mag1, Unit(scale1, powers1)) = self;
         let Quantity(mag2, Unit(scale2, powers2)) = rhs;
 
         if powers1 != powers2 {
-            return None;
+            return Err(Error::InvalidUnitOperation);
         }
 
-        Some(Quantity(
+        Ok(Quantity(
             // normalize to scale1
             mag1 - (mag2 * scale2 / scale1),
             Unit(scale1, powers1),
@@ -93,7 +95,13 @@ impl ops::Div for Quantity {
 /// Units is a derived unit with a scale and one or more base units with an exponent
 /// Newton for example would be encoded as: scale 1000, [g:1, m:1, s:-2]
 #[derive(PartialEq, PartialOrd, Clone, Debug)]
-struct Unit(f64, BTreeMap<BaseUnit, Ratio<i32>>);
+pub struct Unit(pub f64, pub BTreeMap<BaseUnit, Ratio<i32>>);
+
+impl Unit {
+    pub fn unitless() -> Self {
+        Self(1.0, BTreeMap::new())
+    }
+}
 
 impl fmt::Display for Unit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -1,7 +1,8 @@
-use crate::expr::Literal;
-use crate::units::BaseUnit;
+use num::rational::Ratio;
+
 use crate::{
-    expr::{BinOp, Spanned},
+    expr::{BinOp, Literal, Spanned},
+    units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
 use std::collections::HashMap;
@@ -11,7 +12,7 @@ use std::fmt;
 pub enum Value {
     Nothing,
     Bool(bool),
-    Number(f64),
+    Quantity(Quantity),
 }
 
 impl Value {
@@ -19,7 +20,7 @@ impl Value {
         match self {
             Value::Nothing => Ok(false),
             Value::Bool(b) => Ok(*b),
-            Value::Number(_) => Err(Error::InvalidType),
+            Value::Quantity(_) => Err(Error::InvalidType),
         }
     }
 
@@ -27,11 +28,16 @@ impl Value {
         Ok(!self.is_true()?)
     }
 
-    pub fn number(&self) -> Result<f64, Error> {
-        match self {
-            Value::Number(n) => Ok(*n),
-            _ => Err(Error::InvalidType),
+    pub fn quantity(&self) -> Result<Quantity, Error> {
+        if let Value::Quantity(q) = self {
+            Ok(q.clone())
+        } else {
+            Err(Error::InvalidType)
         }
+    }
+
+    pub fn number(&self) -> Result<f64, Error> {
+        Ok(self.quantity()?.0)
     }
 }
 
@@ -40,7 +46,7 @@ impl fmt::Display for Value {
         match self {
             Value::Nothing => write!(f, "nothing"),
             Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
-            Value::Number(n) => write!(f, "{n}"),
+            Value::Quantity(q) => write!(f, "{q}"),
         }
     }
 }
@@ -48,14 +54,14 @@ impl fmt::Display for Value {
 #[derive(Debug)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
-    base_units: Vec<Vec<BaseUnit>>,
+    units: Vec<HashMap<String, Unit>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
-        Environment {
+        Self {
             variables: vec![HashMap::new()],
-            base_units: vec![vec![BaseUnit("Unitless".to_string(), Some("".to_string()))]],
+            units: vec![HashMap::new()],
         }
     }
 
@@ -92,11 +98,29 @@ impl Environment {
         long_name: &str,
         short_name: &Option<String>,
     ) -> Result<(), Error> {
-        self.base_units
-            .last_mut()
-            .expect("No scope exists")
-            .push(BaseUnit(long_name.to_string(), short_name.clone()));
+        // Base units will also produce two entries with derived units made out of
+        // just the base unit itself and scaled by 1.
+        let base_unit = BaseUnit(long_name.to_string(), short_name.clone());
+        let derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
+
+        let current_scope = self.units.last_mut().expect("No scope exists");
+
+        if let Some(name) = short_name {
+            current_scope.insert(name.clone(), derived_unit.clone());
+        }
+
+        current_scope.insert(long_name.to_string(), derived_unit);
+
         Ok(())
+    }
+
+    fn get_unit(&self, name: &str) -> Result<Unit, Error> {
+        for scope in self.units.iter().rev() {
+            if let Some(value) = scope.get(name).cloned() {
+                return Ok(value);
+            }
+        }
+        Err(Error::UnknownName(name.to_string()))
     }
 
     fn push_scope(&mut self) {
@@ -147,14 +171,14 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         }
         Expr::Program(expressions) => eval_block(expressions, env),
         Expr::BinOp(op, a, b) => {
-            let a = eval(a, env)?.number()?;
-            let b = eval(b, env)?.number()?;
-            Ok(match op {
-                BinOp::Add => Value::Number(a + b),
-                BinOp::Div => Value::Number(a / b),
-                BinOp::Mul => Value::Number(a * b),
-                BinOp::Sub => Value::Number(a - b),
-            })
+            let a = eval(a, env)?.quantity()?;
+            let b = eval(b, env)?.quantity()?;
+            Ok(Value::Quantity(match op {
+                BinOp::Add => (a + b)?,
+                BinOp::Sub => (a - b)?,
+                BinOp::Div => a / b,
+                BinOp::Mul => a * b,
+            }))
         }
         Expr::BaseUnitDeclaration(long_name, short_name) => {
             env.declare_base_unit(long_name, short_name)?;
@@ -174,14 +198,17 @@ fn eval_block(expressions: &Vec<Spanned<Expr>>, env: &mut Environment) -> Result
     Ok(Value::Nothing)
 }
 
-fn eval_literal(literal: &Literal, _env: &mut Environment) -> Result<Value, Error> {
+fn eval_literal(literal: &Literal, env: &mut Environment) -> Result<Value, Error> {
     Ok(match literal {
         Literal::Nothing => Value::Nothing,
         Literal::Bool(b) => Value::Bool(*b),
-        Literal::Quantity(magnitude, _unit_name) => {
-            // FIXME: do a lookup and find the unit, should return something called
-            // Value::Quantity instead of Value::Number
-            Value::Number(*magnitude)
+        Literal::Quantity(magnitude, name) => {
+            let unit = if let Some(name) = name {
+                env.get_unit(name)?
+            } else {
+                Unit::unitless()
+            };
+            Value::Quantity(Quantity(*magnitude, unit))
         }
     })
 }

@@ -47,3 +47,8 @@ fn update() {
 fn base_units() {
     run_test_file(Path::new("./samples/base_units.hyp"));
 }
+
+#[test]
+fn unit_arithmetic() {
+    run_test_file(Path::new("./samples/unit_arithmetic.hyp"));
+}

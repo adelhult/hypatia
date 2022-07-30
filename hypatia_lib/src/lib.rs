@@ -8,7 +8,7 @@ let source = "40 + 2";
 let ast = parse(&source).expect("Failed to parse source text");
 let mut env = Environment::default();
 let value = eval(&ast, &mut env).expect("Failed to evaluate the expression");
-assert_eq!(value, Value::Number(42.0));
+assert_eq!(value.to_string(), "42".to_string());
 ```
 */
 mod error;
