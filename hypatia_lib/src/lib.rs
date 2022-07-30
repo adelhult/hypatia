@@ -18,5 +18,5 @@ mod parser;
 mod units;
 pub use error::Error;
 pub use eval::*;
-pub use expr::{Expr, Value};
+pub use expr::Expr;
 pub use parser::parse;

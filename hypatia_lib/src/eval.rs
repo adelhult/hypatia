@@ -2,9 +2,48 @@ use crate::expr::Literal;
 use crate::units::BaseUnit;
 use crate::{
     expr::{BinOp, Spanned},
-    Error, Expr, Value,
+    Error, Expr,
 };
 use std::collections::HashMap;
+use std::fmt;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
+    Nothing,
+    Bool(bool),
+    Number(f64),
+}
+
+impl Value {
+    pub fn is_true(&self) -> Result<bool, Error> {
+        match self {
+            Value::Nothing => Ok(false),
+            Value::Bool(b) => Ok(*b),
+            Value::Number(_) => Err(Error::InvalidType),
+        }
+    }
+
+    pub fn is_false(&self) -> Result<bool, Error> {
+        Ok(!self.is_true()?)
+    }
+
+    pub fn number(&self) -> Result<f64, Error> {
+        match self {
+            Value::Number(n) => Ok(*n),
+            _ => Err(Error::InvalidType),
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Nothing => write!(f, "nothing"),
+            Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
+            Value::Number(n) => write!(f, "{n}"),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Environment {
