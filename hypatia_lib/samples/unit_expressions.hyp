@@ -1,0 +1,10 @@
+unit meters m
+unit seconds s
+
+x = 20 m
+y = 30 meters
+z = x + y
+
+z / 10 s * s
+// Result:
+5 m

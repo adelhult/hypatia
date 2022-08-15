@@ -127,6 +127,13 @@ impl Environment {
             derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
         }
 
+        // Add a variable with the same name as the unit equal to a quanitity of 1 of the unit
+        let quantity = Value::Quantity(Quantity(1.0, derived_unit.clone()));
+        self.declare_var(long_name, &quantity)?;
+        if let Some(name) = short_name {
+            self.declare_var(name, &quantity)?;
+        }
+
         let current_scope = self.units.last_mut().expect("No scope exists");
 
         if let Some(name) = short_name {
