@@ -1,6 +1,6 @@
 use console::style;
 use dialoguer::Input;
-use hypatia_lib::{eval, parse, Environment, Error};
+use hypatia_lib::{eval, parse, report_error, Environment, Error};
 
 fn run(source: &str, env: &mut Environment) -> Result<String, Vec<Error>> {
     let ast = parse(source)?;
@@ -32,7 +32,11 @@ fn main() {
     loop {
         if let Some(input) = get_input() {
             match run(&input, &mut env) {
-                Err(errors) => println!("{:?}", style(errors).red()),
+                Err(errors) => {
+                    for error in errors {
+                        println!("{}", style(report_error(error, &input)).red());
+                    }
+                }
                 Ok(result) => println!("{}", style(result).green()),
             }
         }

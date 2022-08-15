@@ -3,6 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import styled from "styled-components";
 import init, { evaluate } from 'web_bindings';
 import { useEffect, useState } from "react";
+import Convert from "ansi-to-html";
 
 const Workspace = styled.div`
   width: 100%;
@@ -14,8 +15,11 @@ const Workspace = styled.div`
 
 const Result = styled.div`
   padding:1rem;
+  font-size:0.8rem;
+  line-height: 1;
   box-sizing: border-box;
   background-color: rgba(0,0,0, 0.05);
+  font-family: monospace;
 `;
 
 function App() {
@@ -30,8 +34,10 @@ function App() {
 
   useEffect(() => {
     if (!loaded) return;
-
-    setResult(evaluate(source));
+    const output = evaluate(source);
+    console.log(output);
+    let converter = new Convert({newline: true}); 
+    setResult(converter.toHtml(output));
   }, [source])
   
   return <div className="App">
@@ -41,9 +47,7 @@ function App() {
           onChange={setSource}
           value={source}
         />
-        <Result>
-          {result}
-        </Result>
+        <pre><Result dangerouslySetInnerHTML={{__html: result}} /></pre>
       </Workspace>}
     </div>
 }

@@ -1,7 +1,7 @@
 mod utils;
 
 use cfg_if::cfg_if;
-use hypatia_lib::{eval, parse, Environment, Error};
+use hypatia_lib::{eval, parse, report_error, Environment, Error};
 use wasm_bindgen::prelude::*;
 
 cfg_if! {
@@ -16,7 +16,7 @@ cfg_if! {
 pub fn evaluate(src: &str) -> String {
     let mut env = Environment::default();
     match run(src, &mut env) {
-        Err(errors) => format!("{errors:?}"),
+        Err(errors) => errors.into_iter().map(|e| report_error(e, src)).collect(),
         Ok(result) => result,
     }
 }
