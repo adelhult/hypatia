@@ -1,10 +1,5 @@
 import styled from 'styled-components';
 
-
-const Button = styled.button`
-    color: red;
-`;
-
 const Container = styled.div`
     display: flex;
     width:100%;
@@ -19,6 +14,5 @@ const Logo = styled.div`
 export default function Menu() {
     return <Container className="Menu">
         <Logo>Hypatia</Logo>
-        <Button>Test</Button>
     </Container>
 }
