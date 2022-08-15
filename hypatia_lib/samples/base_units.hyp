@@ -1,6 +1,6 @@
 // quantities should be able to be written like this
-unit meter m
-x = 10 meter
-y = 2 m
+unit fooo fo
+x = 10 fo
+y = 2 fooo
 // Result:
-2 m
+2 fo

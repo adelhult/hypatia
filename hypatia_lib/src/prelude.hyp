@@ -1,0 +1,24 @@
+// SI-base units
+// A lot more units will be added later
+
+unit second s
+unit seconds = second
+
+unit metre m
+unit metres = metre
+unit meter = metre
+unit meters = metre
+
+// Note: grams are used as the base unit in this system instead of kilograms
+unit gram g
+unit grams = gram
+
+unit ampere A
+unit amperes = ampere
+
+unit kelvin K
+
+unit mole mol
+unit moles = mole
+
+unit candela cd

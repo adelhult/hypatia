@@ -2,6 +2,7 @@ use num::rational::Ratio;
 
 use crate::{
     expr::{BinOp, Literal, Spanned},
+    parse,
     units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
@@ -59,10 +60,21 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Self {
+        Self::without_prelude().add_prelude()
+    }
+
+    pub fn without_prelude() -> Self {
         Self {
             variables: vec![HashMap::new()],
             units: vec![HashMap::new()],
         }
+    }
+
+    fn add_prelude(mut self) -> Self {
+        let prelude_src = include_str!("prelude.hyp");
+        let prelude_ast = parse(prelude_src).expect("Failed to parse prelude");
+        eval(&prelude_ast, &mut self).expect("Failed to evaluate prelude");
+        self
     }
 
     fn get_var(&self, name: &str) -> Result<Value, Error> {

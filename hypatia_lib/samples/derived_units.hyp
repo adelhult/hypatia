@@ -1,8 +1,8 @@
-unit meter m 
-unit foo = 2 m
-unit bar = 3 foo * 2 m
+unit fakemeter fm 
+unit foo = 2 fm
+unit bar = 3 foo * 2 fm
 1 bar
 // This is the same as saying 
-// 3 * 2 m * 2 m =  12 m^2
+// 3 * 2 fm * 2 fm =  12 fm^2
 // Result:
-1 (12x) m^2
+1 (12x) fm^2

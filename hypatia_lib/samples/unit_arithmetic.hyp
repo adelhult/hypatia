@@ -1,6 +1,6 @@
-unit meter m
-x = 5m + 5m
-y = 2 meter
-(x * y) / 1 meter
+unit foo 
+x = 5 foo + 5 foo
+y = 2 foo
+(x * y) / 1 foo
 // Result:
-20 m
+20 foo
