@@ -1,7 +1,7 @@
 import Menu from "./Menu";
 import CodeMirror from '@uiw/react-codemirror';
 import styled from "styled-components";
-import init, { greet } from 'web_bindings';
+import init, { evaluate } from 'web_bindings';
 import { useEffect, useState } from "react";
 
 const Workspace = styled.div`
@@ -16,18 +16,30 @@ const Workspace = styled.div`
 
 function App() {
   const [loaded, setLoaded] = useState(false);
+  const [source, setSource] = useState("");
+  const [result, setResult] = useState("");
+
+  // Load the WASM file
   useEffect(() => {
     init().then(() => setLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+
+    setResult(evaluate(source));
+  }, [source])
   
-  return loaded && <div className="App">
+  return <div className="App">
       <Menu />
-      <Workspace>
-        <h1 onClick={event =>greet("Eli")}>Hello</h1>
+      {loaded && <Workspace>
+        <h1>Hello</h1>
         <CodeMirror
-          value="console.log('hello world!');"
+          onChange={setSource}
+          value={source}
         />
-      </Workspace>
+        {result}
+      </Workspace>}
     </div>
 }
 

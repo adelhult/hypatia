@@ -1,9 +1,7 @@
-extern crate cfg_if;
-extern crate wasm_bindgen;
-
 mod utils;
 
 use cfg_if::cfg_if;
+use hypatia_lib::{eval, parse, Environment, Error};
 use wasm_bindgen::prelude::*;
 
 cfg_if! {
@@ -22,4 +20,19 @@ extern "C" {
 #[wasm_bindgen]
 pub fn greet(name: &str) {
     alert(&format!("Hello,{}!", name));
+}
+
+#[wasm_bindgen]
+pub fn evaluate(src: &str) -> String {
+    let mut env = Environment::default();
+    match run(src, &mut env) {
+        Err(errors) => format!("{errors:?}"),
+        Ok(result) => result,
+    }
+}
+
+fn run(source: &str, env: &mut Environment) -> Result<String, Vec<Error>> {
+    let ast = parse(source)?;
+    let value = eval(&ast, env).map_err(|error| vec![error])?;
+    Ok(format!("{value}"))
 }
