@@ -75,6 +75,11 @@ impl Environment {
     }
 
     fn update_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
+        // Check if this variable name is already used for a unit (which is not allowed)
+        if self.get_unit(name).is_ok() {
+            return Err(Error::OccupiedName(name.to_string()));
+        }
+
         for scope in self.variables.iter_mut().rev() {
             if !scope.contains_key(name) {
                 continue;
@@ -86,31 +91,15 @@ impl Environment {
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
+        // Check if this variable name is already used for a unit (which is not allowed)
+        if self.get_unit(name).is_ok() {
+            return Err(Error::OccupiedName(name.to_string()));
+        }
+
         self.variables
             .last_mut()
             .expect("No scope exists")
             .insert(name.to_string(), value.clone());
-        Ok(())
-    }
-
-    fn declare_base_unit(
-        &mut self,
-        long_name: &str,
-        short_name: &Option<String>,
-    ) -> Result<(), Error> {
-        // Base units will also produce two entries with derived units made out of
-        // just the base unit itself and scaled by 1.
-        let base_unit = BaseUnit(long_name.to_string(), short_name.clone());
-        let derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
-
-        let current_scope = self.units.last_mut().expect("No scope exists");
-
-        if let Some(name) = short_name {
-            current_scope.insert(name.clone(), derived_unit.clone());
-        }
-
-        current_scope.insert(long_name.to_string(), derived_unit);
-
         Ok(())
     }
 
@@ -216,10 +205,11 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             }))
         }
         Expr::BaseUnitDecl(long_name, short_name) => {
-            env.declare_base_unit(long_name, short_name)?;
+            env.declare_unit(long_name, short_name, None)?;
             Ok(Value::Nothing)
         }
         Expr::DerivedUnitDecl(long_name, short_name, expr) => {
+            // FIXME: Maybe disallow "normal" variables to be used in the rhs
             let value = eval(expr, env)?;
             env.declare_unit(long_name, short_name, Some(&value))?;
             Ok(Value::Nothing)
