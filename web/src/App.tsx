@@ -9,10 +9,14 @@ const Workspace = styled.div`
   max-width: 800px;
   margin-left:auto;
   margin-right:auto;
-  background:rgba(0,0,0,0.05);
   box-sizing: border-box;
 `;
 
+const Result = styled.div`
+  padding:1rem;
+  box-sizing: border-box;
+  background-color: rgba(0,0,0, 0.05);
+`;
 
 function App() {
   const [loaded, setLoaded] = useState(false);
@@ -33,12 +37,13 @@ function App() {
   return <div className="App">
       <Menu />
       {loaded && <Workspace>
-        <h1>Hello</h1>
         <CodeMirror
           onChange={setSource}
           value={source}
         />
-        {result}
+        <Result>
+          {result}
+        </Result>
       </Workspace>}
     </div>
 }

@@ -13,16 +13,6 @@ cfg_if! {
 }
 
 #[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet(name: &str) {
-    alert(&format!("Hello,{}!", name));
-}
-
-#[wasm_bindgen]
 pub fn evaluate(src: &str) -> String {
     let mut env = Environment::default();
     match run(src, &mut env) {
