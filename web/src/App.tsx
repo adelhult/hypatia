@@ -1,15 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import Menu from "./Menu";
+import CodeMirror from '@uiw/react-codemirror';
+import styled from "styled-components";
+
+const Workspace = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin-left:auto;
+  margin-right:auto;
+  background:rgba(0,0,0,0.05);
+  box-sizing: border-box;
+`;
+
 
 function App() {
-  const [count, setCount] = useState(0)
-  return (
-    <div className="App">
-      <h1>Hypatia</h1>
-      TODO: link with WASM build
+  return <div className="App">
+      <Menu />
+      <Workspace>
+        <h1>Hello</h1>
+        <CodeMirror
+          value="console.log('hello world!');"
+        />
+      </Workspace>
     </div>
-  )
 }
 
 export default App
