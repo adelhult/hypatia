@@ -10,10 +10,13 @@
     "wasm": "wasm-pack build ./web_bindings --target web"
   },
   "dependencies": {
+    "@lezer/highlight": "^1.0.0",
+    "@uiw/codemirror-themes": "^4.11.4",
     "@uiw/react-codemirror": "^4.11.4",
     "ansi-to-html": "^0.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.4.0",
     "styled-components": "^5.3.5"
   },
   "devDependencies": {

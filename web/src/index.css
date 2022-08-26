@@ -13,3 +13,8 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.cm-editor .cm-content {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+}

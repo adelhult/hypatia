@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import Button from './Button';
 
 const Container = styled.div`
     display: flex;
@@ -6,21 +7,19 @@ const Container = styled.div`
     box-sizing: border-box;
     padding: 1rem;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 `
 
 const Logo = styled.div`
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: bold;
-`
-
-const Button = styled.button`
 `
 
 export default function Menu() {
     return <Container className="Menu">
         <Logo>Hypatia</Logo>
         <div>
-            <Button>Reference</Button>
             <Button>Github</Button>
         </div>
     </Container>

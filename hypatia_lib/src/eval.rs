@@ -52,7 +52,7 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
     units: Vec<HashMap<String, Unit>>,

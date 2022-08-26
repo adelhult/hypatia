@@ -2,7 +2,7 @@ use ariadne::{Color, Fmt, Label, Report, ReportKind, Source};
 use chumsky::{error::SimpleReason, prelude::Simple};
 use std::io::Cursor;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Error {
     Parsing(Simple<String>),
     ErrorNode,
