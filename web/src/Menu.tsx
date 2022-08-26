@@ -11,14 +11,28 @@ const Container = styled.div`
     margin-bottom: 1rem;
 `
 
-const Logo = styled.div`
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;  
+`;
+
+const Logo = styled.img`
+    max-width: 8rem;
+    padding: 1rem;  
+`
+
+const LogoText = styled.h1`
     font-size: 1.6rem;
-    font-weight: bold;
+    font-weight: normal;
 `
 
 export default function Menu() {
     return <Container className="Menu">
-        <Logo>Hypatia</Logo>
+        <LogoContainer>
+            <Logo src="logo.png"></Logo>
+            <LogoText><strong>Hypatia</strong><br/> Notebook</LogoText>
+        </LogoContainer>
+        
         <div>
             <Button>Github</Button>
         </div>
