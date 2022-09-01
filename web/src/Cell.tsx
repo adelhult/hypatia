@@ -17,6 +17,8 @@ const Result = styled.div`
 const ResultData = styled.div`
     font-size:1rem;
     line-height: 1;
+    overflow-y: hidden;
+    overflow-x: auto;
     
 `;
 
@@ -85,10 +87,10 @@ const Cell = React.memo((props: CellProps) => {
                 lineNumbers: props.code.match("\n") != null,
             }}
         />
-        <Result>
+        {props.code && <Result>
             <AnswerText>Answer:</AnswerText>
             <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
-        </Result>
+        </Result>}
         
     </Wrapper>
 });

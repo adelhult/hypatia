@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 const Workspace = styled.div`
   width: 100%;
-  max-width: 800px;
+  max-width: 700px;
   margin-left:auto;
   margin-right:auto;
   box-sizing: border-box;
