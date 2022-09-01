@@ -7,5 +7,6 @@ export default defineConfig({
   build: {
     minify: false
   },
+  base: "/hypatia/",
   plugins: [wasmPack(['./web_bindings']), react()]
 })

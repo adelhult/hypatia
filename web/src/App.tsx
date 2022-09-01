@@ -62,7 +62,7 @@ function App() {
     setCells(oldCells => {
       let cells = [...oldCells];
       cells[changed_cell_index].code = code;
-      updatedCells.forEach(index => {
+      updatedCells.forEach((index: number) => {
         cells[index].output = read_cell(index);
       });
       return cells;
