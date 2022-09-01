@@ -15,6 +15,11 @@ const Result = styled.div`
   font-family: 'Roboto Mono', monospace;
   overflow-y: auto;
   margin-bottom: 3rem;
+  margin-top: 0;
+`;
+
+const Wrapper = styled.div`
+    box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
 `;
 
 
@@ -57,7 +62,7 @@ interface CellProps {
 const Cell = React.memo((props: CellProps) => {
     const converter = new Convert();
 
-    return <>
+    return <Wrapper>
         <CodeMirror
             onChange={code => props.onChange(props.index, code)}
             value={props.code}
@@ -65,13 +70,13 @@ const Cell = React.memo((props: CellProps) => {
             autoFocus
             extensions={[hotkeys(props.addCellAction)]}
             basicSetup={{
-                lineNumbers: true,
+                lineNumbers: props.code.match("\n") != null,
             }}
         />
         {
             <pre><Result dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
         }
-    </>
+    </Wrapper>
 });
 
 export default Cell;
