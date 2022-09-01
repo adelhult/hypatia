@@ -1,12 +1,10 @@
 import styled from 'styled-components';
-import Button from './Button';
-
 const Container = styled.div`
     display: flex;
     width: 100%;
     box-sizing: border-box;
     padding: 1rem;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 1rem;
 `
@@ -18,7 +16,7 @@ const LogoContainer = styled.div`
 
 const Logo = styled.img`
     max-width: 8rem;
-    padding: 1rem;  
+    margin-right: 0.5rem;
 `
 
 const LogoText = styled.h1`
@@ -32,9 +30,5 @@ export default function Menu() {
             <Logo src="logo.png"></Logo>
             <LogoText><strong>Hypatia</strong><br/> Notebook</LogoText>
         </LogoContainer>
-        
-        <div>
-            <Button>Github</Button>
-        </div>
     </Container>
 }

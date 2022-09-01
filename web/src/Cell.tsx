@@ -7,19 +7,30 @@ import styled from "styled-components";
 import Convert from "ansi-to-html"; 
 
 const Result = styled.div`
-  padding:1rem;
-  font-size:0.8rem;
-  line-height: 1;
-  box-sizing: border-box;
-  background-color: rgba(0,0,0, 0.05);
-  font-family: 'Roboto Mono', monospace;
-  overflow-y: auto;
-  margin-bottom: 3rem;
-  margin-top: 0;
+    padding:0.5rem;
+    box-sizing: border-box;
+    background-color: #ededed;
+    font-family: 'Roboto Mono', monospace;
+    margin-top: 0;
+`;
+
+const ResultData = styled.div`
+    font-size:1rem;
+    line-height: 1;
+    
+`;
+
+const AnswerText = styled.span`
+  opacity: 0.7;
+  font-size: 0.8rem;  
 `;
 
 const Wrapper = styled.div`
     box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
+    border: solid;
+    border-width: 1px;
+    border-color: #d0d0d7;
+    margin-bottom: 1rem;
 `;
 
 
@@ -68,14 +79,17 @@ const Cell = React.memo((props: CellProps) => {
             value={props.code}
             theme={theme}
             autoFocus
+            placeholder={props.index == 0 ? "try '10 m + 2 m'" : undefined}
             extensions={[hotkeys(props.addCellAction)]}
             basicSetup={{
                 lineNumbers: props.code.match("\n") != null,
             }}
         />
-        {
-            <pre><Result dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
-        }
+        <Result>
+            <AnswerText>Answer:</AnswerText>
+            <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
+        </Result>
+        
     </Wrapper>
 });
 

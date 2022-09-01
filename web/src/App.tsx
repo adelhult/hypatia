@@ -17,7 +17,7 @@ const Workspace = styled.div`
 
 const Actions = styled.div`
   display: flex;
-  max-width: 300px;
+  max-width: 150px;
   width: 100%;
 `
 
@@ -31,6 +31,8 @@ const Action = styled.button`
   width:100%;
   margin-top: 0.5rem;
   margin-right: 0.5rem;
+  border: none;
+  border-radius: 5px;
 `;
 
 type Cell = {
