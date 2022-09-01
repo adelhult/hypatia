@@ -46,7 +46,7 @@ interface CellProps {
     onChange: (cell_index: number, code: string) => void,
 }
 
-function Cell(props: CellProps) {
+const Cell = (props: CellProps) => {
     const converter = new Convert();
 
     return <>
@@ -63,6 +63,6 @@ function Cell(props: CellProps) {
             <pre><Result dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
         }
     </>
-}
+};
 
 export default Cell;

@@ -28,7 +28,7 @@ lazy_static! {
 static STATE: Mutex<Vec<Cell>> = Mutex::new(Vec::new());
 
 #[wasm_bindgen]
-pub fn write_cell(cell_index: usize, code: &str) {
+pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
     let mut cells = STATE.lock().unwrap();
 
     // Get the environment produced by the previous cell or use a empty env if this is the first one
@@ -39,11 +39,31 @@ pub fn write_cell(cell_index: usize, code: &str) {
     };
 
     let cell = cells.get_mut(cell_index).expect("Invalid cell index");
-    cell.source_code = code.to_string();
 
-    // Evaluate the code and update the stored output and env
-    cell.output = run(code, &mut env);
-    cell.environment = env;
+    // Update the current cell
+    *cell = Cell {
+        source_code: code.to_string(),
+        output: run(code, &mut env),
+        environment: env,
+    };
+
+    // Update all of the cells dependent on the one that has changed
+    // FIXME: would be nice to check beforehand if we
+    // actually need to do this if the computations are heavy
+    // might also be nice to not do this here but instead just return the list
+    // and let the notebook choose when to update by calling just write_cell and read_cell
+    // on all of the dependent cells.
+    let mut updated_cells = vec![cell_index];
+
+    for dep_index in (cell_index + 1)..cells.len() {
+        let mut env = cells[dep_index - 1].environment.clone();
+        let cell = &mut cells[dep_index];
+        cell.output = run(&cell.source_code, &mut env);
+        cell.environment = env;
+        updated_cells.push(dep_index);
+    }
+
+    updated_cells
 }
 
 #[wasm_bindgen]

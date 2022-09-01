@@ -53,15 +53,20 @@ function App() {
     });
   }, []);
 
-  const onChange = (cell_index: number, code: string) => {
+  const onChange = (changed_cell_index: number, code: string) => {
     if (!loaded) return;
-    write_cell(cell_index, code);
+    const updatedCells = write_cell(changed_cell_index, code);
+    console.log(updatedCells);
+    // update the state to reflect the changes
     setCells(oldCells => {
       let cells = [...oldCells];
-      cells[cell_index].code = code;
-      cells[cell_index].output = read_cell(cell_index);
+      cells[changed_cell_index].code = code;
+      updatedCells.forEach(index => {
+        cells[index].output = read_cell(index);
+      });
       return cells;
     });
+    console.log(cells);
   }
 
   const addCell = () => {
