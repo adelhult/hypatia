@@ -15,6 +15,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+    - working-directory: ./web
     - uses: jetli/wasm-pack-action@v0.3.0
     - name: Build
       uses: actions/setup-node@v3
