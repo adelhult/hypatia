@@ -1,5 +1,6 @@
 import React from "react";
 import { createTheme } from '@uiw/codemirror-themes';
+import {keymap} from "@codemirror/view"
 import CodeMirror from '@uiw/react-codemirror';
 import { tags as t } from '@lezer/highlight';
 import styled from "styled-components";
@@ -15,6 +16,12 @@ const Result = styled.div`
   overflow-y: auto;
   margin-bottom: 3rem;
 `;
+
+
+const hotkeys = (addCellAction: () => void) => keymap.of([{
+      key: "Alt-Enter",
+      run() { addCellAction(); return true }
+    }]);
 
 const theme = createTheme({
     theme: 'light',
@@ -43,10 +50,11 @@ interface CellProps {
     code: string,
     output: string,
     index: number,
+    addCellAction: () => void,
     onChange: (cell_index: number, code: string) => void,
 }
 
-const Cell = (props: CellProps) => {
+const Cell = React.memo((props: CellProps) => {
     const converter = new Convert();
 
     return <>
@@ -55,6 +63,7 @@ const Cell = (props: CellProps) => {
             value={props.code}
             theme={theme}
             autoFocus
+            extensions={[hotkeys(props.addCellAction)]}
             basicSetup={{
                 lineNumbers: true,
             }}
@@ -63,6 +72,6 @@ const Cell = (props: CellProps) => {
             <pre><Result dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
         }
     </>
-};
+});
 
 export default Cell;

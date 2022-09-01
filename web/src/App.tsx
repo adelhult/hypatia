@@ -87,6 +87,7 @@ function App() {
           code={cell.code}
           output={cell.output}
           onChange={onChange}
+          addCellAction={addCell}
           index={index}
         />)}
         <Actions>
