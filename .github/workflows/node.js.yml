@@ -15,14 +15,14 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - run:  cd ./web
     - uses: jetli/wasm-pack-action@v0.3.0
     - name: Build
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: cd web
+        cache-dependency-path: ./web/package-lock.json
+    - run: cd ./web
     - run: npm ci
     - run: npm run wasm
     - run: npm run build
