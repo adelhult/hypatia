@@ -56,7 +56,6 @@ function App() {
   const onChange = (changed_cell_index: number, code: string) => {
     if (!loaded) return;
     const updatedCells = write_cell(changed_cell_index, code);
-    console.log(updatedCells);
     // update the state to reflect the changes
     setCells(oldCells => {
       let cells = [...oldCells];
@@ -66,7 +65,6 @@ function App() {
       });
       return cells;
     });
-    console.log(cells);
   }
 
   const addCell = () => {
@@ -94,9 +92,6 @@ function App() {
         <Actions>
           <Action onClick={addCell}>
             New Cell <MdAddCircleOutline size="1.2rem" />
-          </Action>
-          <Action>
-            Text block <MdFormatAlignLeft size="1.2rem" />
           </Action>
         </Actions>
 
