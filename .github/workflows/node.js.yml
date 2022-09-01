@@ -2,7 +2,7 @@ name: Web CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "testing-ci" ]
     
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - working-directory: ./web
+    - run:  cd ./web
     - uses: jetli/wasm-pack-action@v0.3.0
     - name: Build
       uses: actions/setup-node@v3
