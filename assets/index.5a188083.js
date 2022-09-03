@@ -31892,7 +31892,7 @@ function finalizeInit(instance, module) {
 }
 async function init(input) {
   if (typeof input === "undefined") {
-    input = "/assets/web_bindings_bg.wasm";
+    input = "/hypatia/assets/web_bindings_bg.wasm";
   }
   const imports = getImports();
   if (typeof input === "string" || typeof Request === "function" && input instanceof Request || typeof URL === "function" && input instanceof URL) {
