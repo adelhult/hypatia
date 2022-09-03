@@ -1,0 +1,20 @@
+:root {
+  background-color: #fbfbfb;
+  font-family: 'Noto Serif', serif;
+  box-sizing: border-box;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.cm-editor .cm-content {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+}
