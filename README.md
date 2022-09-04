@@ -1,90 +1,77 @@
 # Hypatia
-This project is exploration into building an ergonomic domain specific language
-for arithmetic calculations - well suited for both simple math and larger homework problems. 
-Physical quantities and unit conversions is a central part of the language. Another main 
-focus is the ability to evaluate your expressions into LaTeX text strings. The language will most 
-likely be interacted with using an WASM based notebook environment.
 
-Still super early but this is [the plan](https://github.com/adelhult/Hypatia/issues/1), we will see how much I will work on this, but it would be nice to have working prototype. 
+Hypatia is a experimental language and notebook environment well suited for both
+simple calculations and larger homework problems.
 
-## A feature highlight
-* Quantities `10km + 20m`
-* Hex and binary literals `0x20 bytes + 0b101 kbit`
-* String interpolation `"hello \(name)!"` 
-* LaTeX pretty printing `x = 20 km` => `x = 20\,\text{km}`
+[Try it in your browser](https://adelhult.github.io/hypatia)
 
-## Ideas for syntax and semantics
+Many features are yet to be implemented, see the
+[roadmap](https://github.com/adelhult/Hypatia/issues/1).
+
+## A taste of the language
+
 ```
-// Unsure of the syntax for comments
-// would be nice to support markdown formatting
-// so it might we wise to avoid using `#` for comments.
+// Physical quantites
+totalTime = 20 s + 3 h
 
-// SI-units will of course be included in the prelude
-// but they should be easy to define yourself
-unit meter
-unit Ångström = 10^(-10) meter
+// Declare your own units
+// (although most should already be included in the prelude)
+unit mile mi = 1 609 m
 
-x = 20 km
-y = 30 m
-z = x + y
+// Variables
+x = 2 m
 
-binary_literal = 0b10101
-hex_literal = 0x32ab bytes
-scientific_form = 15.3e2
-
-// Some examples of functions
-f(x) = 10 + x
-
-// Easy to declare functions
-is_long_distance(distance) = distance > 20 km
-
-min(a, b) = if a < b {
-  a
-} else {
-  b
-}
-
-// Curly braces can be used to create a block with its own scope
+// Block expressions
 area = {
-  length = 20m
-  height = 30m
-  // the last expression of a block will also be the value of the block expression itself
-  length * height 
+	height = 2 km
+	width = 10 m
+	height * width
 }
 
-// Everything in the language is an expression
-foo = bar = 20
-
-// Will most likely have some kind of postfix function application
-print(20)
-20 @ print
-20 |> print
-
-// All blocks (curly braces), including in if expressions will introduce their own scope
-example = 20
-if cond {
-  example = 30
-}
-// That won't change the value of "example"
-// instead use the assigment operator "update"
-example = 20
-if cond {
-  update example = 30
-}
-
-// ...or more idiomatically use the if expression itself
-example = if cond {
-  30
+// Conditionals
+foo = if true {
+	20
 } else {
-  20
+	30
 }
+
+// Hex and binary literals (todo) 
+data = 0x20 bytes
+header = 0b1010 bit
+
+// Functions (todo)
+f(x) = x + 10
+isVeryLong(length) = length > 2 km
+
+// Strings (todo)
+name = "Hypatia"
+"Hi \(name)"
+
+// Latex output (todo)
 ```
 
-## Comparison to other tools/languages
-There are a lot of other great languages and tools with a similar purpose,
-but I still think there is room for Hypatia to offer another set of features and trade-offs. 
-Some insperation is taken from:
-* [CalcuLaTeX](https://github.com/mkhan45/CalcuLaTeX)
-* [Insect](https://github.com/sharkdp/insect)
-* [Wolfram language](https://www.wolfram.com/language/)
-* [Frink](https://frinklang.org/) 
+Note: more demos, can be found in the
+[core/samples directory](https://github.com/adelhult/hypatia/tree/main/core/samples).
+
+## Development
+
+`core` contains the parser and interpreter written in Rust. Run cargo test to
+check a test suite of sample programs.
+
+```
+cd core
+cargo test      # test all of the sample files
+```
+
+`web` is the notebook interface written in Typescript using React. Run this to
+try it locally.
+
+```
+cd web
+npm install     # install the dependencies
+npm run wasm    # build the wasm web bindings
+npm run dev     # start a vite development server
+```
+
+Note: every commit to the main branch will update the online version using a
+github actions workflow.
