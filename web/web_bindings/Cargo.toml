@@ -8,7 +8,7 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hypatia_lib = {version= "*", path = "../../hypatia_lib/"}
+hypatia_lib = {version= "*", path = "../../core/"}
 cfg-if = "1.0.0"
 lazy_static="1.4.0"
 wasm-bindgen = "0.2.63"

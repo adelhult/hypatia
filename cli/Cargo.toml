@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hypatia_lib = {path = "../hypatia_lib"}
+hypatia_lib = {path = "../core"}
 console = "0.15.1"
 dialoguer = "0.10.2"
