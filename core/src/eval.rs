@@ -59,7 +59,7 @@ impl fmt::Display for Value {
 #[derive(Debug, Clone)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
-    units: Vec<HashMap<String, Unit>>,
+    units: HashMap<String, Unit>,
 }
 
 impl Environment {
@@ -70,7 +70,7 @@ impl Environment {
     pub fn without_prelude() -> Self {
         Self {
             variables: vec![HashMap::new()],
-            units: vec![HashMap::new()],
+            units: HashMap::new(),
         }
     }
 
@@ -150,24 +150,21 @@ impl Environment {
             self.declare_var(name, &quantity)?;
         }
 
-        let current_scope = self.units.last_mut().expect("No scope exists");
-
         if let Some(name) = short_name {
-            current_scope.insert(name.clone(), derived_unit.clone());
+            self.units.insert(name.clone(), derived_unit.clone());
         }
 
-        current_scope.insert(long_name.to_string(), derived_unit);
+        self.units.insert(long_name.to_string(), derived_unit);
 
         Ok(())
     }
 
+    // Resolve the name of unit
     fn get_unit(&self, name: &str) -> Result<Unit, Error> {
-        for scope in self.units.iter().rev() {
-            if let Some(value) = scope.get(name).cloned() {
-                return Ok(value);
-            }
-        }
-        Err(Error::UnknownName(name.to_string()))
+        self.units
+            .get(name)
+            .cloned()
+            .ok_or_else(|| Error::UnknownName(name.to_string()))
     }
 
     fn push_scope(&mut self) {
