@@ -26451,6 +26451,95 @@ var ReactCodeMirror = /* @__PURE__ */ react.exports.forwardRef((props, ref) => {
   }, other));
 });
 ReactCodeMirror.displayName = "CodeMirror";
+var DefaultContext = {
+  color: void 0,
+  size: void 0,
+  className: void 0,
+  style: void 0,
+  attr: void 0
+};
+var IconContext = React.createContext && React.createContext(DefaultContext);
+var __assign = globalThis && globalThis.__assign || function() {
+  __assign = Object.assign || function(t2) {
+    for (var s, i = 1, n2 = arguments.length; i < n2; i++) {
+      s = arguments[i];
+      for (var p2 in s)
+        if (Object.prototype.hasOwnProperty.call(s, p2))
+          t2[p2] = s[p2];
+    }
+    return t2;
+  };
+  return __assign.apply(this, arguments);
+};
+var __rest = globalThis && globalThis.__rest || function(s, e2) {
+  var t2 = {};
+  for (var p2 in s)
+    if (Object.prototype.hasOwnProperty.call(s, p2) && e2.indexOf(p2) < 0)
+      t2[p2] = s[p2];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function")
+    for (var i = 0, p2 = Object.getOwnPropertySymbols(s); i < p2.length; i++) {
+      if (e2.indexOf(p2[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p2[i]))
+        t2[p2[i]] = s[p2[i]];
+    }
+  return t2;
+};
+function Tree2Element(tree) {
+  return tree && tree.map(function(node, i) {
+    return React.createElement(node.tag, __assign({
+      key: i
+    }, node.attr), Tree2Element(node.child));
+  });
+}
+function GenIcon(data) {
+  return function(props) {
+    return /* @__PURE__ */ jsx(IconBase, {
+      ...__assign({
+        attr: __assign({}, data.attr)
+      }, props),
+      children: Tree2Element(data.child)
+    });
+  };
+}
+function IconBase(props) {
+  var elem = function(conf) {
+    var attr = props.attr, size = props.size, title = props.title, svgProps = __rest(props, ["attr", "size", "title"]);
+    var computedSize = size || conf.size || "1em";
+    var className;
+    if (conf.className)
+      className = conf.className;
+    if (props.className)
+      className = (className ? className + " " : "") + props.className;
+    return /* @__PURE__ */ jsxs("svg", {
+      ...__assign({
+        stroke: "currentColor",
+        fill: "currentColor",
+        strokeWidth: "0"
+      }, conf.attr, attr, svgProps, {
+        className,
+        style: __assign(__assign({
+          color: props.color || conf.color
+        }, conf.style), props.style),
+        height: computedSize,
+        width: computedSize,
+        xmlns: "http://www.w3.org/2000/svg"
+      }),
+      children: [title && /* @__PURE__ */ jsx("title", {
+        children: title
+      }), props.children]
+    });
+  };
+  return IconContext !== void 0 ? /* @__PURE__ */ jsx(IconContext.Consumer, {
+    children: function(conf) {
+      return elem(conf);
+    }
+  }) : elem(DefaultContext);
+}
+function MdAddCircleOutline(props) {
+  return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "fill": "none", "d": "M0 0h24v24H0z" } }, { "tag": "path", "attr": { "d": "M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" } }] })(props);
+}
+function MdClose(props) {
+  return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "fill": "none", "d": "M0 0h24v24H0z" } }, { "tag": "path", "attr": { "d": "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" } }] })(props);
+}
 var lib = {};
 var decode = {};
 const Aacute$1 = "\xC1";
@@ -31682,11 +31771,28 @@ const AnswerText = styled.span`
   font-size: 0.8rem;  
 `;
 const Wrapper = styled.div`
+    position: relative;
     box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
     border: solid;
     border-width: 1px;
     border-color: #d0d0d7;
     margin-bottom: 1rem;
+`;
+const Remove = styled.button`
+    z-index: 1000;
+    position: absolute;
+    right: 3px;
+    top: 6px;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
 `;
 const hotkeys = (addCellAction) => keymap.of([{
   key: "Alt-Enter",
@@ -31728,7 +31834,11 @@ const theme = createTheme({
 const Cell = React.memo((props) => {
   const converter = new ansi_to_html();
   return /* @__PURE__ */ jsxs(Wrapper, {
-    children: [/* @__PURE__ */ jsx(ReactCodeMirror, {
+    children: [/* @__PURE__ */ jsxs(Remove, {
+      title: "Remove cell",
+      onClick: () => props.onRemove(props.index),
+      children: [/* @__PURE__ */ jsx(MdClose, {}), " "]
+    }), /* @__PURE__ */ jsx(ReactCodeMirror, {
       onChange: (code) => props.onChange(props.index, code),
       value: props.code,
       theme,
@@ -31836,6 +31946,9 @@ function write_cell(cell_index, code) {
 function insert_cell(cell_index) {
   wasm.insert_cell(cell_index);
 }
+function remove_cell(cell_index) {
+  wasm.remove_cell(cell_index);
+}
 const cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
 cachedTextDecoder.decode();
 function getStringFromWasm0(ptr, len) {
@@ -31901,92 +32014,6 @@ async function init(input) {
   const { instance, module } = await load(await input, imports);
   return finalizeInit(instance, module);
 }
-var DefaultContext = {
-  color: void 0,
-  size: void 0,
-  className: void 0,
-  style: void 0,
-  attr: void 0
-};
-var IconContext = React.createContext && React.createContext(DefaultContext);
-var __assign = globalThis && globalThis.__assign || function() {
-  __assign = Object.assign || function(t2) {
-    for (var s, i = 1, n2 = arguments.length; i < n2; i++) {
-      s = arguments[i];
-      for (var p2 in s)
-        if (Object.prototype.hasOwnProperty.call(s, p2))
-          t2[p2] = s[p2];
-    }
-    return t2;
-  };
-  return __assign.apply(this, arguments);
-};
-var __rest = globalThis && globalThis.__rest || function(s, e2) {
-  var t2 = {};
-  for (var p2 in s)
-    if (Object.prototype.hasOwnProperty.call(s, p2) && e2.indexOf(p2) < 0)
-      t2[p2] = s[p2];
-  if (s != null && typeof Object.getOwnPropertySymbols === "function")
-    for (var i = 0, p2 = Object.getOwnPropertySymbols(s); i < p2.length; i++) {
-      if (e2.indexOf(p2[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p2[i]))
-        t2[p2[i]] = s[p2[i]];
-    }
-  return t2;
-};
-function Tree2Element(tree) {
-  return tree && tree.map(function(node, i) {
-    return React.createElement(node.tag, __assign({
-      key: i
-    }, node.attr), Tree2Element(node.child));
-  });
-}
-function GenIcon(data) {
-  return function(props) {
-    return /* @__PURE__ */ jsx(IconBase, {
-      ...__assign({
-        attr: __assign({}, data.attr)
-      }, props),
-      children: Tree2Element(data.child)
-    });
-  };
-}
-function IconBase(props) {
-  var elem = function(conf) {
-    var attr = props.attr, size = props.size, title = props.title, svgProps = __rest(props, ["attr", "size", "title"]);
-    var computedSize = size || conf.size || "1em";
-    var className;
-    if (conf.className)
-      className = conf.className;
-    if (props.className)
-      className = (className ? className + " " : "") + props.className;
-    return /* @__PURE__ */ jsxs("svg", {
-      ...__assign({
-        stroke: "currentColor",
-        fill: "currentColor",
-        strokeWidth: "0"
-      }, conf.attr, attr, svgProps, {
-        className,
-        style: __assign(__assign({
-          color: props.color || conf.color
-        }, conf.style), props.style),
-        height: computedSize,
-        width: computedSize,
-        xmlns: "http://www.w3.org/2000/svg"
-      }),
-      children: [title && /* @__PURE__ */ jsx("title", {
-        children: title
-      }), props.children]
-    });
-  };
-  return IconContext !== void 0 ? /* @__PURE__ */ jsx(IconContext.Consumer, {
-    children: function(conf) {
-      return elem(conf);
-    }
-  }) : elem(DefaultContext);
-}
-function MdAddCircleOutline(props) {
-  return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "fill": "none", "d": "M0 0h24v24H0z" } }, { "tag": "path", "attr": { "d": "M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" } }] })(props);
-}
 const Workspace = styled.div`
   width: 100%;
   max-width: 700px;
@@ -32049,6 +32076,14 @@ function App() {
       return cells2;
     });
   };
+  const removeCell = (index2) => {
+    remove_cell(index2);
+    setCells((oldCells) => {
+      let cells2 = [...oldCells];
+      cells2.splice(index2, 1);
+      return cells2;
+    });
+  };
   return /* @__PURE__ */ jsxs("div", {
     className: "App",
     children: [/* @__PURE__ */ jsx(Menu, {}), loaded && /* @__PURE__ */ jsxs(Workspace, {
@@ -32056,6 +32091,7 @@ function App() {
         code: cell.code,
         output: cell.output,
         onChange,
+        onRemove: removeCell,
         addCellAction: addCell,
         index: index2
       }, index2)), /* @__PURE__ */ jsx(Actions, {
