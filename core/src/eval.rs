@@ -106,9 +106,14 @@ impl Environment {
         Err(Error::UpdateNonExistentVar(name.to_string()))
     }
 
-    fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
+    fn declare_var(
+        &mut self,
+        name: &str,
+        value: &Value,
+        allow_override: bool,
+    ) -> Result<(), Error> {
         // Check if this variable name is already used for a unit (which is not allowed)
-        if self.get_unit(name).is_ok() {
+        if self.get_unit(name).is_ok() && !allow_override {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
@@ -145,9 +150,9 @@ impl Environment {
 
         // Add a variable with the same name as the unit equal to a quanitity of 1 of the unit
         let quantity = Value::Quantity(Quantity(1.0, derived_unit.clone()));
-        self.declare_var(long_name, &quantity)?;
+        self.declare_var(long_name, &quantity, true)?;
         if let Some(name) = short_name {
-            self.declare_var(name, &quantity)?;
+            self.declare_var(name, &quantity, true)?;
         }
 
         if let Some(name) = short_name {
@@ -190,7 +195,7 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         Expr::Variable(name) => env.get_var(name),
         Expr::VarDeclaration(name, rhs) => {
             let value = eval(rhs, env)?;
-            env.declare_var(name, &value)?;
+            env.declare_var(name, &value, false)?;
             Ok(value)
         }
         Expr::VarUpdate(name, rhs) => {
