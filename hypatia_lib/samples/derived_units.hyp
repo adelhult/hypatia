@@ -5,4 +5,4 @@ unit bar = 3 foo * 2 fm
 // This is the same as saying 
 // 3 * 2 fm * 2 fm =  12 fm^2
 // Result:
-1 (12x) fm^2
+12 fm^2

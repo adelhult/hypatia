@@ -47,7 +47,11 @@ impl fmt::Display for Value {
         match self {
             Value::Nothing => write!(f, "nothing"),
             Value::Bool(b) => write!(f, "{}", if *b { "true" } else { "false" }),
-            Value::Quantity(q) => write!(f, "{q}"),
+            Value::Quantity(q) => {
+                // FIXME: We should not always normalize when displaying, still need to implement a way of
+                // showing the result in the most suitable unit
+                write!(f, "{}", q.clone().normalize())
+            }
         }
     }
 }
