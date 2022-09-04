@@ -1,8 +1,8 @@
 import Menu from "./Menu";
 import Cell from "./Cell";
 import styled from "styled-components";
-import init, { read_cell, write_cell, insert_cell } from 'web_bindings';
-import { MdAddCircleOutline, MdFormatAlignLeft } from "react-icons/md";
+import init, { read_cell, write_cell, insert_cell, remove_cell } from 'web_bindings';
+import { MdAddCircleOutline } from "react-icons/md";
 import { useEffect, useState } from "react";
 
 const Workspace = styled.div`
@@ -81,6 +81,16 @@ function App() {
     });
   }
 
+  const removeCell = (index: number) => {
+    remove_cell(index);
+
+    setCells(oldCells => {
+      let cells = [...oldCells];
+      cells.splice(index, 1);
+      return cells;
+    });
+  }
+
   return <div className="App">
       <Menu />
       {loaded && <Workspace>
@@ -89,6 +99,7 @@ function App() {
           code={cell.code}
           output={cell.output}
           onChange={onChange}
+          onRemove={removeCell}
           addCellAction={addCell}
           index={index}
         />)}

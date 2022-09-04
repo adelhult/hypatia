@@ -27,6 +27,18 @@ lazy_static! {
 
 static STATE: Mutex<Vec<Cell>> = Mutex::new(Vec::new());
 
+fn refresh(cell_index: usize, cells: &mut Vec<Cell>) {
+    let mut env = if cell_index == 0 {
+        EMPTY_ENV.clone()
+    } else {
+        cells[cell_index - 1].environment.clone()
+    };
+
+    let cell = &mut cells[cell_index];
+    cell.output = run(&cell.source_code, &mut env);
+    cell.environment = env;
+}
+
 #[wasm_bindgen]
 pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
     let mut cells = STATE.lock().unwrap();
@@ -47,23 +59,20 @@ pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
         environment: env,
     };
 
-    // Update all of the cells dependent on the one that has changed
+    // "Refresh" all of the cells dependent on the one that has changed
     // FIXME: would be nice to check beforehand if we
     // actually need to do this if the computations are heavy
     // might also be nice to not do this here but instead just return the list
     // and let the notebook choose when to update by calling just write_cell and read_cell
     // on all of the dependent cells.
-    let mut updated_cells = vec![cell_index];
+    let mut refreshed_cells = vec![cell_index];
 
     for dep_index in (cell_index + 1)..cells.len() {
-        let mut env = cells[dep_index - 1].environment.clone();
-        let cell = &mut cells[dep_index];
-        cell.output = run(&cell.source_code, &mut env);
-        cell.environment = env;
-        updated_cells.push(dep_index);
+        refresh(dep_index, &mut cells);
+        refreshed_cells.push(dep_index);
     }
 
-    updated_cells
+    refreshed_cells
 }
 
 #[wasm_bindgen]
@@ -78,6 +87,15 @@ pub fn insert_cell(cell_index: usize) {
             output: Ok(String::new()),
         },
     );
+}
+
+#[wasm_bindgen]
+pub fn remove_cell(cell_index: usize) {
+    let mut cells = STATE.lock().unwrap();
+    cells.remove(cell_index);
+
+    // Refresh all of the dependent cells
+    (cell_index..cells.len()).for_each(|i| refresh(i, &mut cells));
 }
 
 #[wasm_bindgen]

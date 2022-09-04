@@ -4,6 +4,7 @@ import {keymap} from "@codemirror/view"
 import CodeMirror from '@uiw/react-codemirror';
 import { tags as t } from '@lezer/highlight';
 import styled from "styled-components";
+import { MdClose } from "react-icons/md";
 import Convert from "ansi-to-html"; 
 
 const Result = styled.div`
@@ -28,11 +29,29 @@ const AnswerText = styled.span`
 `;
 
 const Wrapper = styled.div`
+    position: relative;
     box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
     border: solid;
     border-width: 1px;
     border-color: #d0d0d7;
     margin-bottom: 1rem;
+`;
+
+const Remove = styled.button`
+    z-index: 1000;
+    position: absolute;
+    right: 3px;
+    top: 6px;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
 `;
 
 
@@ -69,6 +88,7 @@ interface CellProps {
     output: string,
     index: number,
     addCellAction: () => void,
+    onRemove: (cell_index: number) => void,
     onChange: (cell_index: number, code: string) => void,
 }
 
@@ -76,6 +96,7 @@ const Cell = React.memo((props: CellProps) => {
     const converter = new Convert();
 
     return <Wrapper>
+        <Remove title="Remove cell" onClick={() => props.onRemove(props.index)}><MdClose/> </Remove>
         <CodeMirror
             onChange={code => props.onChange(props.index, code)}
             value={props.code}
@@ -91,7 +112,6 @@ const Cell = React.memo((props: CellProps) => {
             <AnswerText>Answer:</AnswerText>
             <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}} /></pre>
         </Result>}
-        
     </Wrapper>
 });
 
