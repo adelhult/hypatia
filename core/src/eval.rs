@@ -3,6 +3,7 @@ use num::rational::Ratio;
 use crate::{
     expr::{BinOp, Literal, Spanned},
     parse,
+    prefixes::{PrefixName, PrefixScale, PREFIXES},
     units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
@@ -56,10 +57,16 @@ impl fmt::Display for Value {
     }
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+enum UnitEntry {
+    DeclUnit(String),
+    PrefixedUnit(String),
+}
+
 #[derive(Debug, Clone)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
-    units: HashMap<String, Unit>,
+    units: HashMap<UnitEntry, Unit>,
 }
 
 impl Environment {
@@ -151,23 +158,55 @@ impl Environment {
         // Add a variable with the same name as the unit equal to a quanitity of 1 of the unit
         let quantity = Value::Quantity(Quantity(1.0, derived_unit.clone()));
         self.declare_var(long_name, &quantity, true)?;
+
+        // add the unit
+        self.units.insert(
+            UnitEntry::DeclUnit(long_name.to_string()),
+            derived_unit.clone(),
+        );
+
+        // Do the same if there is a short name
         if let Some(name) = short_name {
+            self.units
+                .insert(UnitEntry::DeclUnit(name.clone()), derived_unit.clone());
             self.declare_var(name, &quantity, true)?;
         }
 
-        if let Some(name) = short_name {
-            self.units.insert(name.clone(), derived_unit.clone());
+        for (PrefixName(prefix_name_long, prefix_name_short), PrefixScale(base, exponent)) in
+            PREFIXES.iter()
+        {
+            let unit = derived_unit
+                .clone()
+                .rescaled((*base as f64).powf(*exponent as f64));
+
+            let quantity = Value::Quantity(Quantity(1.0, unit.clone()));
+
+            self.units.insert(
+                UnitEntry::PrefixedUnit(format!("{prefix_name_long}{long_name}")),
+                unit.clone(),
+            );
+
+            self.declare_var(&format!("{prefix_name_long}{long_name}"), &quantity, true)?;
+
+            if let Some(name) = short_name {
+                self.units.insert(
+                    UnitEntry::PrefixedUnit(format!("{prefix_name_short}{name}")),
+                    unit,
+                );
+
+                self.declare_var(&format!("{prefix_name_short}{name}"), &quantity, true)?;
+            }
         }
-
-        self.units.insert(long_name.to_string(), derived_unit);
-
         Ok(())
     }
 
-    // Resolve the name of unit
+    /// Resolve the name of unit
+    /// First try to get a declared unit if not found check if there is
+    /// an prefixed entry.
     fn get_unit(&self, name: &str) -> Result<Unit, Error> {
         self.units
-            .get(name)
+            .get(&UnitEntry::DeclUnit(name.to_string()))
+            .or_else(|| self.units.get(&UnitEntry::PrefixedUnit(name.to_string())))
             .cloned()
             .ok_or_else(|| Error::UnknownName(name.to_string()))
     }

@@ -15,6 +15,7 @@ mod error;
 mod eval;
 mod expr;
 mod parser;
+mod prefixes;
 mod units;
 pub use error::{report_error, Error};
 pub use eval::*;

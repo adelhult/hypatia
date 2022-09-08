@@ -101,6 +101,10 @@ impl Unit {
     pub fn unitless() -> Self {
         Self(1.0, BTreeMap::new())
     }
+
+    pub fn rescaled(self, scale: f64) -> Self {
+        Self(self.0 * scale, self.1)
+    }
 }
 
 impl fmt::Display for Unit {

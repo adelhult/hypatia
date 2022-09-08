@@ -62,3 +62,8 @@ fn derived_units() {
 fn unit_expressions() {
     run_test_file(Path::new("./samples/unit_expressions.hyp"));
 }
+
+#[test]
+fn replace_units() {
+    run_test_file(Path::new("./samples/replace_units.hyp"));
+}

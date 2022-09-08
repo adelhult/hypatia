@@ -1,0 +1,21 @@
+// When declaring a new unit "foo" prefixed
+// versions of that unit will also be created,
+// for example "kilofoo" and "kf".
+
+unit foo f = 1 m
+
+result = 1 f
+
+// However, if we create another unit "kilofoo" we want that
+// to shadow the colliding prefixed name.
+
+unit kilofoo kf = 3 m
+
+update result = result + 1 f
+
+// Which means that "result" should now be equal to
+// 1 m + 3m and not 1 m + 1000 m
+result
+
+// Result:
+2 m 
