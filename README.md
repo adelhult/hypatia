@@ -23,16 +23,16 @@ x = 2 m
 
 // Block expressions
 area = {
-	height = 2 km
-	width = 10 m
-	height * width
+   height = 2 km
+   width = 10 m
+   height * width
 }
 
 // Conditionals
 foo = if true {
-	20
+   20
 } else {
-	30
+   30
 }
 
 // Hex and binary literals (todo) 
