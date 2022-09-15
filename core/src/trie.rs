@@ -27,27 +27,27 @@ where
     V: Clone + PartialEq,
 {
     /// Creates an empty Trie
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self(Node::new())
     }
 
     /// Gets the amount of values in this Trie
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.0.len()
     }
 
     /// Creates an iterator over all the key-value pairs for which values are stored in this Trie
-    fn entries(&self) -> Box<dyn Iterator<Item = (&[K], &V)> + '_> {
+    pub fn entries(&self) -> Box<dyn Iterator<Item = (&[K], &V)> + '_> {
         self.0.entries()
     }
 
     /// Creates an iterator over all the values which are stored in this Trie
-    fn values(&self) -> Box<dyn Iterator<Item = &V> + '_> {
+    pub fn values(&self) -> Box<dyn Iterator<Item = &V> + '_> {
         self.0.values()
     }
 
     /// Creates an iterator over all the keys for which values are stored in this Trie
-    fn keys(&self) -> Box<dyn Iterator<Item = &[K]> + '_> {
+    pub fn keys(&self) -> Box<dyn Iterator<Item = &[K]> + '_> {
         self.0.keys()
     }
 
@@ -60,23 +60,23 @@ where
     /// If the key [1,2,3] is searched, the values for [1], [1,2], and [1,2,3] (if they exist)
     /// is returned. Note that [1,2] may exist even though neither [1] nor [1,2,3] exists.
     /// The resulting Vec contains key-value-pairs sorted with the shortest keys first.
-    fn search(&self, arr: &[K]) -> Vec<(Vec<K>, V)> {
+    pub fn search(&self, arr: &[K]) -> Vec<(Vec<K>, V)> {
         self.0.search(&[], arr)
     }
 
     /// Inserts the given value at the specified path, returning the previous value as an Option
-    fn insert(&mut self, path: &[K], val: V) -> Option<V> {
+    pub fn insert(&mut self, path: &[K], val: V) -> Option<V> {
         self.0.insert(0, path, val)
     }
 
     /// Removes the value at the given path, returning the previous value as an Option
-    fn remove(&mut self, path: &[K]) -> Option<V> {
+    pub fn remove(&mut self, path: &[K]) -> Option<V> {
         self.0.remove(0, path)
     }
 
     /// Removes all nodes without values and/or children with values in this Trie. This may reduce
     /// the size of this Trie
-    fn purge(&mut self) {
+    pub fn purge(&mut self) {
         self.0.purge();
     }
 }
@@ -84,7 +84,7 @@ where
 /// A wrapper around the data structure Trie for storing values keyed by strings, which allows for
 /// retrieval of all values whose keys are prefix of the searched term.
 #[derive(Debug, Clone, PartialEq)]
-pub struct StringTrie<V>(Trie<char, V>)
+pub struct StringTrie<V>(Trie<u8, V>)
 where
     V: Clone + PartialEq;
 
@@ -116,7 +116,7 @@ where
         let res = self
             .0
             .entries()
-            .map(|(k, v): (&[char], &V)| (k.iter().collect(), v));
+            .map(|(k, v): (&[u8], &V)| (String::from_utf8(k.to_vec()).ok().unwrap(), v));
         Box::new(res)
     }
 
@@ -127,7 +127,10 @@ where
 
     /// Creates an iterator over all the keys for which values are stored in this Trie
     pub fn keys(&self) -> Box<dyn Iterator<Item = String> + '_> {
-        let res = self.0.keys().map(|k: &[char]| k.iter().collect());
+        let res = self
+            .0
+            .keys()
+            .map(|k: &[u8]| String::from_utf8(k.to_vec()).ok().unwrap());
         Box::new(res)
     }
 
@@ -141,29 +144,29 @@ where
     /// is returned. Note that "ab" may exist even though neither "a" nor "abc exists.
     /// The resulting Vec contains key-value-pairs sorted with the shortest keys first.
     pub fn search(&self, key: &str) -> Vec<(String, V)> {
-        let k: Vec<_> = key.chars().collect();
+        let k: &[u8] = key.as_bytes();
         self.0
             .search(&k)
             .into_iter()
-            .map(|(cs, val)| (cs.into_iter().collect(), val))
+            .map(|(cs, val)| (String::from_utf8(cs.to_vec()).ok().unwrap(), val))
             .collect()
     }
 
     /// Inserts the given value at the specified key, returning the previous value as an Option
     pub fn insert(&mut self, key: &str, val: V) -> Option<V> {
-        let k: Vec<_> = key.chars().collect();
-        self.0.insert(&k, val)
+        let k: &[u8] = key.as_bytes();
+        self.0.insert(k, val)
     }
 
     /// Removes the value with the given key, returning the previous value as an Option
-    fn remove(&mut self, key: &str) -> Option<V> {
-        let k: Vec<_> = key.chars().collect();
-        self.0.remove(&k)
+    pub fn remove(&mut self, key: &str) -> Option<V> {
+        let k: &[u8] = key.as_bytes();
+        self.0.remove(k)
     }
 
     /// Removes all nodes without values and/or children with values in this Trie. This may reduce
     /// the size of this Trie
-    fn purge(&mut self) {
+    pub fn purge(&mut self) {
         self.0.purge();
     }
 }
@@ -360,15 +363,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::Trie;
+    use super::{StringTrie, Trie};
     use proptest::prelude::*;
     use std::collections::HashMap;
 
     proptest! {
         #[test]
         fn add_remove_len_purge(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
-            let max_key_len = 30;
-            let max_entries = 30;
+            let max_key_len = 20;
+            let max_entries = 20;
 
             let entries: Vec<(Vec<u8>, u8)> =
                 unfiltered_entries.into_iter()
@@ -409,8 +412,8 @@ mod tests {
     proptest! {
         #[test]
         fn entry_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
-            let max_key_len = 30;
-            let max_entries = 30;
+            let max_key_len = 20;
+            let max_entries = 20;
 
             let entries: Vec<(Vec<u8>, u8)> =
                 unfiltered_entries.into_iter()
@@ -442,8 +445,8 @@ mod tests {
     proptest! {
         #[test]
         fn key_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
-            let max_key_len = 30;
-            let max_entries = 30;
+            let max_key_len = 20;
+            let max_entries = 20;
 
             let entries: Vec<(Vec<u8>, u8)> =
                 unfiltered_entries.into_iter()
@@ -475,8 +478,8 @@ mod tests {
     proptest! {
         #[test]
         fn val_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
-            let max_key_len = 30;
-            let max_entries = 30;
+            let max_key_len = 20;
+            let max_entries = 20;
 
             let entries: Vec<(Vec<u8>, u8)> =
                 unfiltered_entries.into_iter()
@@ -486,6 +489,166 @@ mod tests {
 
             let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
             let mut tr : Trie<u8, u8> = Trie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<&u8> = tr
+                    .values()
+                    .collect();
+                let mut hmv : Vec<&u8> = hm
+                    .values()
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn string_add_remove_len_purge(unfiltered_entries: Vec<(String, u8)>) {
+            let max_key_len = 20;
+            let max_entries = 20;
+
+            let entries: Vec<(String, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(mut k, v)| {
+                        while k.len() > max_key_len {
+                            k.pop();
+                        }
+                        (k,v)
+                    })
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
+            let mut tr : StringTrie<u8> = StringTrie::new();
+
+            for (key, val) in &entries {
+                let a = hm.insert(key.as_bytes().to_vec(), *val);
+                let b = tr.insert(key, *val);
+                assert!(a == b);
+                assert!(hm.len() == tr.len());
+                tr.purge();
+                assert!(hm.len() == tr.len());
+            }
+
+            for (key, _) in &entries {
+                let hmvals: Vec<u8> = (0..=key.as_bytes().len()).flat_map(|i| hm.get(&key.as_bytes()[0..i]).into_iter()).copied().collect();
+                let trvals: Vec<u8> = tr.search(key).iter().map(|(_, x)| *x).collect();
+                assert!(hmvals == trvals);
+            }
+
+            for (key, _) in &entries {
+                let a = hm.remove(&key.as_bytes().to_vec());
+                let b = tr.remove(key);
+                assert!(a == b);
+                assert!(hm.len() == tr.len());
+                tr.purge();
+                assert!(hm.len() == tr.len());
+            }
+            assert!(tr.len() == 0);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn string_entry_iterator(unfiltered_entries: Vec<(String, u8)>) {
+            let max_key_len = 20;
+            let max_entries = 20;
+
+            let entries: Vec<(String, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(mut k, v)| {
+                        while k.len() > max_key_len {
+                            k.pop();
+                        }
+                        (k,v)
+                    })
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<String, u8> = HashMap::new();
+            let mut tr : StringTrie<u8> = StringTrie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<(String, &u8)> = tr
+                    .entries()
+                    .collect();
+                let mut hmv : Vec<(String, &u8)> = hm
+                    .iter()
+                    .map(|(s,v)| (s.to_string(), v))
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn string_key_iterator(unfiltered_entries: Vec<(String, u8)>) {
+            let max_key_len = 20;
+            let max_entries = 20;
+
+            let entries: Vec<(String, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(mut k, v)| {
+                        while k.len() > max_key_len {
+                            k.pop();
+                        }
+                        (k,v)
+                    })
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<String, u8> = HashMap::new();
+            let mut tr : StringTrie<u8> = StringTrie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<String> = tr
+                    .keys()
+                    .collect();
+                let mut hmv : Vec<String> = hm
+                    .keys()
+                    .map(|u| u.to_string())
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn string_val_iterator(unfiltered_entries: Vec<(String, u8)>) {
+            let max_key_len = 20;
+            let max_entries = 20;
+
+            let entries: Vec<(String, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(mut k, v)| {
+                        while k.len() > max_key_len {
+                            k.pop();
+                        }
+                        (k,v)
+                    })
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<String, u8> = HashMap::new();
+            let mut tr : StringTrie<u8> = StringTrie::new();
 
             for (key, val) in &entries {
                 hm.insert(key.clone(), *val);
