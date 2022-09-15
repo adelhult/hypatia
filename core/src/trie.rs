@@ -31,16 +31,29 @@ where
         Self(Node::new())
     }
 
+    /// Gets the amount of values in this Trie
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Creates an iterator over all the key-value pairs for which values are stored in this Trie
     fn entries(&self) -> Box<dyn Iterator<Item = (&[K], &V)> + '_> {
         self.0.entries()
     }
 
+    /// Creates an iterator over all the values which are stored in this Trie
     fn values(&self) -> Box<dyn Iterator<Item = &V> + '_> {
         self.0.values()
     }
 
+    /// Creates an iterator over all the keys for which values are stored in this Trie
     fn keys(&self) -> Box<dyn Iterator<Item = &[K]> + '_> {
         self.0.keys()
+    }
+
+    /// Checks if this Trie contains the given key
+    pub fn contains_key(&self, key: &[K]) -> bool {
+        self.keys().any(|k| k == key)
     }
 
     /// Searches this Trie for all values for which their keys is prefixes of the given key.
@@ -54,6 +67,17 @@ where
     /// Inserts the given value at the specified path, returning the previous value as an Option
     fn insert(&mut self, path: &[K], val: V) -> Option<V> {
         self.0.insert(0, path, val)
+    }
+
+    /// Removes the value at the given path, returning the previous value as an Option
+    fn remove(&mut self, path: &[K]) -> Option<V> {
+        self.0.remove(0, path)
+    }
+
+    /// Removes all nodes without values and/or children with values in this Trie. This may reduce
+    /// the size of this Trie
+    fn purge(&mut self) {
+        self.0.purge();
     }
 }
 
@@ -82,6 +106,12 @@ where
         Self(Trie::new())
     }
 
+    /// Gets the amount of values in this Trie
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Creates an iterator over all the key-value pairs for which values are stored in this Trie
     pub fn entries(&self) -> Box<dyn Iterator<Item = (String, &V)> + '_> {
         let res = self
             .0
@@ -90,15 +120,18 @@ where
         Box::new(res)
     }
 
+    /// Creates an iterator over all the values which are stored in this Trie
     pub fn values(&self) -> Box<dyn Iterator<Item = &V> + '_> {
         self.0.values()
     }
 
+    /// Creates an iterator over all the keys for which values are stored in this Trie
     pub fn keys(&self) -> Box<dyn Iterator<Item = String> + '_> {
         let res = self.0.keys().map(|k: &[char]| k.iter().collect());
         Box::new(res)
     }
 
+    /// Checks if this Trie contains the given key
     pub fn contains_key(&self, key: &str) -> bool {
         self.keys().any(|k| k == key)
     }
@@ -120,6 +153,18 @@ where
     pub fn insert(&mut self, key: &str, val: V) -> Option<V> {
         let k: Vec<_> = key.chars().collect();
         self.0.insert(&k, val)
+    }
+
+    /// Removes the value with the given key, returning the previous value as an Option
+    fn remove(&mut self, key: &str) -> Option<V> {
+        let k: Vec<_> = key.chars().collect();
+        self.0.remove(&k)
+    }
+
+    /// Removes all nodes without values and/or children with values in this Trie. This may reduce
+    /// the size of this Trie
+    fn purge(&mut self) {
+        self.0.purge();
     }
 }
 
@@ -183,6 +228,12 @@ where
             val: None,
             edges: HashMap::new(),
         }
+    }
+
+    fn len(&self) -> usize {
+        let this: usize = self.val.is_some().into();
+        let children: usize = self.edges.values().map(|node| node.len()).sum();
+        this + children
     }
 
     fn entries(&self) -> Box<dyn Iterator<Item = (&[K], &V)> + '_> {
@@ -250,6 +301,35 @@ where
         ret
     }
 
+    // locates the path and inserts the specified value there
+    // if path is empty, this node is at the end of the path
+    // if path isn't empty, try to find the next node (and create a new one if it doesn't exist)
+    // and then recurse with tail of path into that node
+    // val is the value to insert, return value is the previous value
+    fn remove(&mut self, depth: usize, path: &[K]) -> Option<V> {
+        if depth == path.len() {
+            // We have reached the path and set our value, returning the old value
+            // as per the API of HashMap
+            let old_val = mem::replace(&mut self.val, None);
+            return old_val;
+        }
+
+        // if path remains: extract head from list (which is the next key)
+        let head = path[depth].clone();
+
+        // if no next node, return None immediately
+        if !self.edges.contains_key(&head) {
+            return None;
+        }
+
+        // recurse into next node, save the result and return it
+        let mut ret = None;
+        self.edges
+            .entry(head)
+            .and_modify(|next_node| ret = next_node.remove(depth + 1, path));
+        ret
+    }
+
     fn search(&self, acc: &[K], arr: &[K]) -> Vec<(Vec<K>, V)> {
         let mut res = Vec::new();
 
@@ -269,5 +349,158 @@ where
         }
 
         res
+    }
+
+    // RETURNS TRUE IF THIS NODE CAN BE REMOVED
+    fn purge(&mut self) -> bool {
+        self.edges.retain(|_, node| !node.purge());
+        self.edges.is_empty() && self.val.is_none()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Trie;
+    use proptest::prelude::*;
+    use std::collections::HashMap;
+
+    proptest! {
+        #[test]
+        fn add_remove_len_purge(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
+            let max_key_len = 30;
+            let max_entries = 30;
+
+            let entries: Vec<(Vec<u8>, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(k, v)| (k.into_iter().take(max_key_len).collect(), v))
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
+            let mut tr : Trie<u8, u8> = Trie::new();
+
+            for (key, val) in &entries {
+                let a = hm.insert(key.clone(), *val);
+                let b = tr.insert(key, *val);
+                assert!(a == b);
+                assert!(hm.len() == tr.len());
+                tr.purge();
+                assert!(hm.len() == tr.len());
+            }
+
+            for (key, _) in &entries {
+                let hmvals: Vec<u8> = (0..=key.len()).flat_map(|i| hm.get(&key[0..i]).into_iter()).copied().collect();
+                let trvals: Vec<u8> = tr.search(key).iter().map(|(_,x)| *x).collect();
+                assert!(hmvals == trvals);
+            }
+
+            for (key, _) in &entries {
+                let a = hm.remove(key);
+                let b = tr.remove(key);
+                assert!(a == b);
+                assert!(hm.len() == tr.len());
+                tr.purge();
+                assert!(hm.len() == tr.len());
+            }
+            assert!(tr.len() == 0);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn entry_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
+            let max_key_len = 30;
+            let max_entries = 30;
+
+            let entries: Vec<(Vec<u8>, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(k, v)| (k.into_iter().take(max_key_len).collect(), v))
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
+            let mut tr : Trie<u8, u8> = Trie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<(&[u8], &u8)> = tr
+                    .entries()
+                    .collect();
+                let mut hmv : Vec<(&[u8], &u8)> = hm
+                    .iter()
+                    .map(|(vec, k)| (vec.as_slice(), k))
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn key_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
+            let max_key_len = 30;
+            let max_entries = 30;
+
+            let entries: Vec<(Vec<u8>, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(k, v)| (k.into_iter().take(max_key_len).collect(), v))
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
+            let mut tr : Trie<u8, u8> = Trie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<&[u8]> = tr
+                    .keys()
+                    .collect();
+                let mut hmv : Vec<&[u8]> = hm
+                    .keys()
+                    .map(|u| u.as_slice())
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn val_iterator(unfiltered_entries: Vec<(Vec<u8>, u8)>) {
+            let max_key_len = 30;
+            let max_entries = 30;
+
+            let entries: Vec<(Vec<u8>, u8)> =
+                unfiltered_entries.into_iter()
+                    .map(|(k, v)| (k.into_iter().take(max_key_len).collect(), v))
+                    .take(max_entries)
+                    .collect();
+
+            let mut hm : HashMap<Vec<u8>, u8> = HashMap::new();
+            let mut tr : Trie<u8, u8> = Trie::new();
+
+            for (key, val) in &entries {
+                hm.insert(key.clone(), *val);
+                tr.insert(key, *val);
+
+                let mut trv : Vec<&u8> = tr
+                    .values()
+                    .collect();
+                let mut hmv : Vec<&u8> = hm
+                    .values()
+                    .collect();
+                trv.sort();
+                hmv.sort();
+                assert!(trv == hmv);
+            }
+        }
     }
 }
