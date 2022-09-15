@@ -194,7 +194,6 @@ impl Environment {
 
         // Otherwise we will check if the unit is prefixed
         for (prefix_name, prefix) in self.prefixes.search(name) {
-            dbg!(&prefix_name);
             if let Some(unit_name) = name.strip_prefix(&prefix_name) {
                 let unit = self.units.get(unit_name);
 
