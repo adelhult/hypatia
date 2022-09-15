@@ -67,3 +67,8 @@ fn unit_expressions() {
 fn replace_units() {
     run_test_file(Path::new("./samples/replace_units.hyp"));
 }
+
+#[test]
+fn declare_prefix() {
+    run_test_file(Path::new("./samples/declare_prefix.hyp"));
+}

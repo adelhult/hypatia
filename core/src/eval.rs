@@ -3,7 +3,7 @@ use num::rational::Ratio;
 use crate::{
     expr::{BinOp, Literal, Spanned},
     parse,
-    prefixes::{PrefixName, PrefixScale, PREFIXES},
+    trie::StringTrie,
     units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
@@ -57,16 +57,19 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum UnitEntry {
-    DeclUnit(String),
-    PrefixedUnit(String),
+/// Used to keep track of additional information related to a Unit/Prefix
+/// such as if it is a long or short name
+#[derive(Debug, Clone, PartialEq)]
+struct Entry<T> {
+    is_long_name: bool,
+    value: T,
 }
 
 #[derive(Debug, Clone)]
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
-    units: HashMap<UnitEntry, Unit>,
+    units: HashMap<String, Entry<Unit>>,
+    prefixes: StringTrie<Entry<f64>>,
 }
 
 impl Environment {
@@ -78,6 +81,7 @@ impl Environment {
         Self {
             variables: vec![HashMap::new()],
             units: HashMap::new(),
+            prefixes: StringTrie::new(),
         }
     }
 
@@ -89,11 +93,20 @@ impl Environment {
     }
 
     fn get_var(&self, name: &str) -> Result<Value, Error> {
+        // First check if the identifer is actually a unit.
+        // Units used as variable will return a quantity of 1 of that unit.
+        if let Ok(unit) = self.get_unit(name) {
+            return Ok(Value::Quantity(Quantity(1.0, unit)));
+        }
+
+        // Otherwise go through all of the scopes to find the the variable
         for scope in self.variables.iter().rev() {
             if let Some(value) = scope.get(name).cloned() {
                 return Ok(value);
             }
         }
+
+        // If we did not find it, the variable must be undeclare
         Err(Error::UnknownName(name.to_string()))
     }
 
@@ -113,14 +126,9 @@ impl Environment {
         Err(Error::UpdateNonExistentVar(name.to_string()))
     }
 
-    fn declare_var(
-        &mut self,
-        name: &str,
-        value: &Value,
-        allow_override: bool,
-    ) -> Result<(), Error> {
+    fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
         // Check if this variable name is already used for a unit (which is not allowed)
-        if self.get_unit(name).is_ok() && !allow_override {
+        if self.get_unit(name).is_ok() {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
@@ -138,7 +146,6 @@ impl Environment {
         derivation: Option<&Value>,
     ) -> Result<(), Error> {
         let derived_unit;
-
         // handle derived units
         // unit mile mi = 1 609.344 m
         if let Some(value) = derivation {
@@ -155,60 +162,59 @@ impl Environment {
             derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
         }
 
-        // Add a variable with the same name as the unit equal to a quanitity of 1 of the unit
-        let quantity = Value::Quantity(Quantity(1.0, derived_unit.clone()));
-        self.declare_var(long_name, &quantity, true)?;
-
         // add the unit
         self.units.insert(
-            UnitEntry::DeclUnit(long_name.to_string()),
-            derived_unit.clone(),
+            long_name.to_string(),
+            Entry {
+                is_long_name: true,
+                value: derived_unit.clone(),
+            },
         );
 
         // Do the same if there is a short name
         if let Some(name) = short_name {
-            self.units
-                .insert(UnitEntry::DeclUnit(name.clone()), derived_unit.clone());
-            self.declare_var(name, &quantity, true)?;
-        }
-
-        for (PrefixName(prefix_name_long, prefix_name_short), PrefixScale(base, exponent)) in
-            PREFIXES.iter()
-        {
-            let unit = derived_unit
-                .clone()
-                .rescaled((*base as f64).powf(*exponent as f64));
-
-            let quantity = Value::Quantity(Quantity(1.0, unit.clone()));
-
             self.units.insert(
-                UnitEntry::PrefixedUnit(format!("{prefix_name_long}{long_name}")),
-                unit.clone(),
+                name.clone(),
+                Entry {
+                    is_long_name: false,
+                    value: derived_unit,
+                },
             );
-
-            self.declare_var(&format!("{prefix_name_long}{long_name}"), &quantity, true)?;
-
-            if let Some(name) = short_name {
-                self.units.insert(
-                    UnitEntry::PrefixedUnit(format!("{prefix_name_short}{name}")),
-                    unit,
-                );
-
-                self.declare_var(&format!("{prefix_name_short}{name}"), &quantity, true)?;
-            }
         }
+
         Ok(())
     }
 
     /// Resolve the name of unit
-    /// First try to get a declared unit if not found check if there is
-    /// an prefixed entry.
     fn get_unit(&self, name: &str) -> Result<Unit, Error> {
-        self.units
-            .get(&UnitEntry::DeclUnit(name.to_string()))
-            .or_else(|| self.units.get(&UnitEntry::PrefixedUnit(name.to_string())))
-            .cloned()
-            .ok_or_else(|| Error::UnknownName(name.to_string()))
+        // If there is a unit with this exact name, return that
+        if let Some(unit) = self.units.get(name) {
+            return Ok(unit.value.clone());
+        }
+
+        // Otherwise we will check if the unit is prefixed
+        for (prefix_name, prefix) in self.prefixes.search(name) {
+            dbg!(&prefix_name);
+            if let Some(unit_name) = name.strip_prefix(&prefix_name) {
+                let unit = self.units.get(unit_name);
+
+                if unit.is_none() {
+                    continue;
+                }
+
+                let unit = unit.unwrap();
+
+                // We want both the unit and prefix to be long or a short nane
+                // things like "kmeter" is not accepted
+                if unit.is_long_name != prefix.is_long_name {
+                    continue;
+                }
+
+                return Ok(unit.value.clone().rescaled(prefix.value));
+            }
+        }
+
+        Err(Error::UnknownName(name.to_string()))
     }
 
     fn push_scope(&mut self) {
@@ -217,6 +223,21 @@ impl Environment {
 
     fn pop_scope(&mut self) {
         self.variables.pop();
+    }
+
+    fn declare_prefix(&mut self, name: &str, value: f64, is_long_name: bool) -> Result<(), Error> {
+        if self.prefixes.contains_key(name) {
+            Err(Error::OccupiedName(name.to_string()))
+        } else {
+            self.prefixes.insert(
+                name,
+                Entry {
+                    is_long_name,
+                    value,
+                },
+            );
+            Ok(())
+        }
     }
 }
 
@@ -234,7 +255,7 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         Expr::Variable(name) => env.get_var(name),
         Expr::VarDeclaration(name, rhs) => {
             let value = eval(rhs, env)?;
-            env.declare_var(name, &value, false)?;
+            env.declare_var(name, &value)?;
             Ok(value)
         }
         Expr::VarUpdate(name, rhs) => {
@@ -276,6 +297,14 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             // FIXME: Maybe disallow "normal" variables to be used in the rhs
             let value = eval(expr, env)?;
             env.declare_unit(long_name, short_name, Some(&value))?;
+            Ok(Value::Nothing)
+        }
+        Expr::PrefixDecl(long_name, short_name, rhs) => {
+            let value = eval(rhs, env)?.number()?; // FIXME: ensure that it is dimensionless
+            env.declare_prefix(long_name, value, true)?;
+            if let Some(name) = short_name {
+                env.declare_prefix(name, value, false)?;
+            }
             Ok(Value::Nothing)
         }
     }

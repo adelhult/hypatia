@@ -22,3 +22,11 @@ unit mole mol
 unit moles = mole
 
 unit candela cd
+
+// Prefixes
+prefix kilo k = 1000
+prefix hector h = 100
+prefix deca da = 10
+prefix deci d = 0.1
+prefix centi c = 0.01
+prefix milli m = 0.001

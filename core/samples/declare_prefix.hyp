@@ -1,0 +1,4 @@
+prefix foo f = 42
+1 foometer + 1fm
+// Result:
+84 m

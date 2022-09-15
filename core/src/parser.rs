@@ -71,6 +71,7 @@ enum Token {
     Comma,
     Newline,
     Comment,
+    Prefix,
 }
 
 impl fmt::Display for Token {
@@ -105,6 +106,7 @@ impl fmt::Display for Token {
             Token::Comma => write!(f, ","),
             Token::Newline => writeln!(f),
             Token::Comment => write!(f, ""),
+            Token::Prefix => write!(f, "prefix"),
         }
     }
 }
@@ -149,6 +151,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // TODO: support more then just c idents
     let ident = text::ident().map(|i: String| match i.as_str() {
         "unit" => Token::Unit,
+        "prefix" => Token::Prefix,
         "if" => Token::If,
         "else" => Token::Else,
         "update" => Token::Update,
@@ -243,11 +246,22 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 Expr::DerivedUnitDecl(long_name, short_name, Box::new(expr))
             });
 
+        // prefix foo f = 42
+        let prefix_decl = just(Token::Prefix)
+            .ignore_then(ident)
+            .then(ident.or_not())
+            .then_ignore(just(Token::Assignment))
+            .then(expr.clone())
+            .map(|((long_name, short_name), expr)| {
+                Expr::PrefixDecl(long_name, short_name, Box::new(expr))
+            });
+
         let atom = value
             .or(var_update)
             .or(var_declaration)
             .or(derived_unit_decl)
             .or(base_unit_decl)
+            .or(prefix_decl)
             .or(ident.map(Expr::Variable))
             .map_with_span(|expr, span| (expr, span))
             // Expression surrounded with parentheses

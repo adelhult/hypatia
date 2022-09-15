@@ -12,6 +12,7 @@ pub enum Expr {
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
     BaseUnitDecl(String, Option<String>),
     DerivedUnitDecl(String, Option<String>, Box<Spanned<Self>>),
+    PrefixDecl(String, Option<String>, Box<Spanned<Self>>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

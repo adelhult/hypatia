@@ -15,8 +15,10 @@ mod error;
 mod eval;
 mod expr;
 mod parser;
-mod prefixes;
+#[allow(dead_code)]
+mod trie;
 mod units;
+
 pub use error::{report_error, Error};
 pub use eval::*;
 pub use expr::Expr;
