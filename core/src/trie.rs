@@ -3,7 +3,7 @@ use std::hash::Hash;
 use std::{iter, mem};
 
 /// A data structure for storing values keyed by arrays of K which allows for retrieval of all
-/// values whose keys are prefix of the searched term. If you want to search using [u64], your
+/// values whose keys are prefix of the searched term. If you want to search using `[u64]`, your
 /// K should be u64. If you want String/Char, see StringTrie.
 #[derive(Debug, Clone, PartialEq)]
 struct Trie<K, V>(Node<K, V>)
@@ -57,9 +57,9 @@ where
     }
 
     /// Searches this Trie for all values for which their keys is prefixes of the given key.
-    /// If the key [1,2,3] is searched, the values for [1], [1,2], and [1,2,3] (if they exist)
-    /// is returned. Note that [1,2] may exist even though neither [1] nor [1,2,3] exists.
-    /// The resulting Vec contains key-value-pairs sorted with the shortest keys first.
+    /// If the key `[1,2,3]` is searched, the values for `[1]`, `[1,2]`, and `[1,2,3]` (if they
+    /// exist) is returned. Note that `[1,2]` may exist even though neither `[1]` nor `[1,2,3]`
+    /// exists. The resulting Vec contains key-value-pairs sorted with the shortest keys first.
     pub fn search(&self, arr: &[K]) -> Vec<(Vec<K>, V)> {
         self.0.search(&[], arr)
     }
