@@ -113,6 +113,12 @@ impl fmt::Display for Token {
     }
 }
 
+fn ident() -> impl Parser<char, Vec<char>, Error = Simple<char>> + Copy + Clone {
+    filter(|c: &char| c.is_alphabetic() || *c == '_')
+        .map(Some)
+        .chain(filter(|c: &char| c.is_alphanumeric() || *c == '_').repeated())
+}
+
 fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // parse number
     let frac = just('.').chain(text::digits(10));
@@ -151,7 +157,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     .or(text::newline().to(Token::Newline));
 
     // TODO: support more then just c idents
-    let ident = text::ident().map(|i: String| match i.as_str() {
+    let keywords_and_idents = ident().map(|v| match String::from_iter(v).as_str() {
         "unit" => Token::Unit,
         "not" => Token::Not,
         "prefix" => Token::Prefix,
@@ -170,7 +176,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .or(number)
         .or(control)
         .or(ops)
-        .or(ident)
+        .or(keywords_and_idents)
         .recover_with(skip_then_retry_until([]));
 
     let whitespace = just(' ').or(just('\t')).repeated();

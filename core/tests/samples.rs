@@ -77,3 +77,8 @@ fn declare_prefix() {
 fn unary_operators() {
     run_test_file(Path::new("./samples/unary_operators.hyp"));
 }
+
+#[test]
+fn unicode_ident() {
+    run_test_file(Path::new("./samples/unicode_ident.hyp"));
+}
