@@ -72,3 +72,8 @@ fn replace_units() {
 fn declare_prefix() {
     run_test_file(Path::new("./samples/declare_prefix.hyp"));
 }
+
+#[test]
+fn unary_operators() {
+    run_test_file(Path::new("./samples/unary_operators.hyp"));
+}

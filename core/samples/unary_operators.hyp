@@ -1,0 +1,7 @@
+if not not not true {
+    100
+} else {
+    - 30
+}
+// Result:
+-30

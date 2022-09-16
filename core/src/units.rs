@@ -92,6 +92,15 @@ impl ops::Div for Quantity {
     }
 }
 
+impl ops::Neg for Quantity {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        let Quantity(mag, unit) = self;
+        Quantity(-mag, unit)
+    }
+}
+
 /// Units is a derived unit with a scale and one or more base units with an exponent
 /// Newton for example would be encoded as: scale 1000, [g:1, m:1, s:-2]
 #[derive(PartialEq, PartialOrd, Clone, Debug)]

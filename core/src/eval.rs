@@ -1,7 +1,7 @@
 use num::rational::Ratio;
 
 use crate::{
-    expr::{BinOp, Literal, Spanned},
+    expr::{BinOp, Literal, Spanned, UnaryOp},
     parse,
     trie::StringTrie,
     units::{BaseUnit, Quantity, Unit},
@@ -33,6 +33,14 @@ impl Value {
     pub fn quantity(&self) -> Result<Quantity, Error> {
         if let Value::Quantity(q) = self {
             Ok(q.clone())
+        } else {
+            Err(Error::InvalidType)
+        }
+    }
+
+    pub fn boolean(&self) -> Result<bool, Error> {
+        if let Value::Bool(b) = self {
+            Ok(*b)
         } else {
             Err(Error::InvalidType)
         }
@@ -305,6 +313,13 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 env.declare_prefix(name, value, false)?;
             }
             Ok(Value::Nothing)
+        }
+        Expr::UnaryOp(op, expr) => {
+            let value = eval(expr, env)?;
+            match op {
+                UnaryOp::Negate => Ok(Value::Quantity(-value.quantity()?)),
+                UnaryOp::Not => Ok(Value::Bool(!value.boolean()?)),
+            }
         }
     }
 }

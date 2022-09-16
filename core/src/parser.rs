@@ -72,6 +72,7 @@ enum Token {
     Newline,
     Comment,
     Prefix,
+    Not,
 }
 
 impl fmt::Display for Token {
@@ -106,6 +107,7 @@ impl fmt::Display for Token {
             Token::Comma => write!(f, ","),
             Token::Newline => writeln!(f),
             Token::Comment => write!(f, ""),
+            Token::Not => write!(f, "not"),
             Token::Prefix => write!(f, "prefix"),
         }
     }
@@ -151,6 +153,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // TODO: support more then just c idents
     let ident = text::ident().map(|i: String| match i.as_str() {
         "unit" => Token::Unit,
+        "not" => Token::Not,
         "prefix" => Token::Prefix,
         "if" => Token::If,
         "else" => Token::Else,
@@ -289,14 +292,41 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 (Expr::Call(Box::new(f), args.0), span)
             });
 
+        /*
+            let op = just(Token::Op(Op::Sub)).to(ast::UnaryOp::Neg)
+            .or(just(Token::Op(Op::Not)).to(ast::UnaryOp::Not))
+            .map_with_span(SrcNode::new);
+        let unary = op.repeated()
+            .then(chained.labelled("unary operand"))
+            .foldr(|op, expr| {
+                let span = op.span().union(expr.span());
+                SrcNode::new(ast::Expr::Unary(op, expr), span)
+            })
+            .boxed();
+        */
+
+        let op = just(Token::Sub)
+            .to(UnaryOp::Negate)
+            .or(just(Token::Not).to(UnaryOp::Not));
+
+        let unary =
+            op.repeated()
+                .then(call.labelled("unary operand"))
+                .foldr(|op, (expr, expr_span)| {
+                    (
+                        Expr::UnaryOp(op, Box::new((expr, expr_span.clone()))),
+                        expr_span, // FIXME: this does not include the unary operator itself
+                    )
+                });
+
         // Product operators '*' and '/'
         let op = just(Token::Mul)
             .to(BinOp::Mul)
             .or(just(Token::Div).to(BinOp::Div));
 
-        let product = call
+        let product = unary
             .clone()
-            .then(op.then(call).repeated())
+            .then(op.then(unary).repeated())
             .foldl(|a, (operator, b)| {
                 let span = a.1.start..b.1.end;
                 (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)

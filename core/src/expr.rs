@@ -13,6 +13,13 @@ pub enum Expr {
     BaseUnitDecl(String, Option<String>),
     DerivedUnitDecl(String, Option<String>, Box<Spanned<Self>>),
     PrefixDecl(String, Option<String>, Box<Spanned<Self>>),
+    UnaryOp(UnaryOp, Box<Spanned<Expr>>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum UnaryOp {
+    Negate,
+    Not,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
