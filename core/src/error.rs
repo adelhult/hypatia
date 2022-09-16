@@ -89,7 +89,7 @@ pub fn report_error(error: Error, src: &str) -> String {
             String::from_utf8(result.into_inner()).unwrap()
         }
         // FIXME: add spans to these, then we can create nicer
-        // error reports for these as well
+        //  error reports for these as well
         Error::ErrorNode => String::from("Error node"),
         Error::UnknownName(name) => format!("Unknown name {name}."),
         Error::UpdateNonExistentVar(name) => {
