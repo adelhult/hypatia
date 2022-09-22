@@ -298,19 +298,6 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 (Expr::Call(Box::new(f), args.0), span)
             });
 
-        /*
-            let op = just(Token::Op(Op::Sub)).to(ast::UnaryOp::Neg)
-            .or(just(Token::Op(Op::Not)).to(ast::UnaryOp::Not))
-            .map_with_span(SrcNode::new);
-        let unary = op.repeated()
-            .then(chained.labelled("unary operand"))
-            .foldr(|op, expr| {
-                let span = op.span().union(expr.span());
-                SrcNode::new(ast::Expr::Unary(op, expr), span)
-            })
-            .boxed();
-        */
-
         let op = just(Token::Sub)
             .to(UnaryOp::Negate)
             .or(just(Token::Not).to(UnaryOp::Not));
