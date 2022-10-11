@@ -31778,7 +31778,7 @@ const Wrapper = styled.div`
     border-color: #d0d0d7;
     margin-bottom: 1rem;
 `;
-const Remove = styled.button`
+const Remove$1 = styled.button`
     z-index: 1000;
     position: absolute;
     right: 3px;
@@ -31834,7 +31834,7 @@ const theme = createTheme({
 const Cell = React.memo((props) => {
   const converter = new ansi_to_html();
   return /* @__PURE__ */ jsxs(Wrapper, {
-    children: [/* @__PURE__ */ jsxs(Remove, {
+    children: [/* @__PURE__ */ jsxs(Remove$1, {
       title: "Remove cell",
       onClick: () => props.onRemove(props.index),
       children: [/* @__PURE__ */ jsx(MdClose, {}), " "]
@@ -31861,7 +31861,81 @@ const Cell = React.memo((props) => {
     })]
   });
 });
+const Box = styled.div`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.2rem;
+    align-items: flex-start;
+    background: #6B8F71;
+    color: white;
+    padding: 1rem;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
+`;
+const Remove = styled.button`
+    z-index: 1000;
+    position: absolute;
+    right: 3px;
+    top: 6px;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    opacity: 1;
+    cursor: pointer;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
+`;
+const Action$1 = styled.button`
+    background: none;
+    border: none;
+    text-decoration: underline;
+    color: inherit;
+    font-weight: normal;
+    font-family: inherit;
+    padding:0;
+    font-size: 1rem;
+    margin-top: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background:rgba(1,1,1, 0.1);
+    }
+`;
+const Title = styled.span`
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+`;
+function Prompt(props) {
+  const [show, setShow] = react.exports.useState(true);
+  return show ? /* @__PURE__ */ jsxs(Box, {
+    className: "Prompt",
+    children: [/* @__PURE__ */ jsx(Remove, {
+      title: "Close prompt",
+      onClick: () => setShow(false),
+      children: /* @__PURE__ */ jsx(MdClose, {
+        style: {
+          color: "white"
+        }
+      })
+    }), props.title && /* @__PURE__ */ jsx(Title, {
+      children: props.title
+    }), props.children, /* @__PURE__ */ jsx(Action$1, {
+      onClick: props.handleAction,
+      children: props.action
+    })]
+  }) : null;
+}
 let wasm;
+function clear_state() {
+  wasm.clear_state();
+}
 let WASM_VECTOR_LEN = 0;
 let cachedUint8Memory0 = new Uint8Array();
 function getUint8Memory0() {
@@ -32038,10 +32112,11 @@ const Action = styled.button`
   margin-top: 0.5rem;
   margin-right: 0.5rem;
   border: none;
-  border-radius: 5px;
+  border-radius: 0.2rem;
 `;
 function App() {
   const [loaded, setLoaded] = react.exports.useState(false);
+  const [prevSession, setPreviousSession] = react.exports.useState([]);
   const [cells, setCells] = react.exports.useState([{
     code: "",
     output: ""
@@ -32052,6 +32127,23 @@ function App() {
       insert_cell(0);
     });
   }, []);
+  react.exports.useEffect(() => {
+    let parsedData = localStorage.getItem("cells");
+    if (!parsedData) {
+      return;
+    }
+    const prevCells = JSON.parse(parsedData);
+    if (prevCells.length === 0) {
+      return;
+    }
+    if (prevCells.every((code) => code.length === 0)) {
+      return;
+    }
+    setPreviousSession(prevCells);
+  }, []);
+  react.exports.useEffect(() => {
+    localStorage.setItem("cells", JSON.stringify(cells.map((cell) => cell.code)));
+  });
   const onChange = (changed_cell_index, code) => {
     if (!loaded)
       return;
@@ -32084,10 +32176,27 @@ function App() {
       return cells2;
     });
   };
+  const restoreSession = () => {
+    clear_state();
+    prevSession.forEach((code, index2) => {
+      insert_cell(index2);
+      write_cell(index2, code);
+    });
+    setCells(prevSession.map((code) => ({
+      code,
+      output: ""
+    })));
+    setPreviousSession([]);
+  };
   return /* @__PURE__ */ jsxs("div", {
     className: "App",
     children: [/* @__PURE__ */ jsx(Menu, {}), loaded && /* @__PURE__ */ jsxs(Workspace, {
-      children: [cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
+      children: [prevSession.length > 0 && /* @__PURE__ */ jsx(Prompt, {
+        title: "Welcome back!",
+        action: "Restore session",
+        handleAction: restoreSession,
+        children: "You have a previous session saved since last time."
+      }), cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
         code: cell.code,
         output: cell.output,
         onChange,
