@@ -8893,7 +8893,7 @@ function Menu() {
       }), /* @__PURE__ */ jsxs(LogoText, {
         children: [/* @__PURE__ */ jsx("strong", {
           children: "Hypatia"
-        }), /* @__PURE__ */ jsx("br", {}), " Notebook"]
+        }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
       })]
     })
   });
