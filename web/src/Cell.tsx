@@ -6,6 +6,7 @@ import { tags as t } from '@lezer/highlight';
 import styled from "styled-components";
 import { MdClose } from "react-icons/md";
 import Convert from "ansi-to-html"; 
+import {motion} from "framer-motion";
 
 const Result = styled.div`
     padding:0.5rem;
@@ -28,7 +29,7 @@ const AnswerText = styled.span`
   font-size: 0.8rem;  
 `;
 
-const Wrapper = styled.div`
+const Wrapper = styled(motion.div)`
     position: relative;
     box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
     border: solid;
@@ -87,6 +88,7 @@ interface CellProps {
     code: string,
     output: string,
     index: number,
+    noAnimation?: boolean,
     addCellAction: () => void,
     onRemove: (cell_index: number) => void,
     onChange: (cell_index: number, code: string) => void,
@@ -95,7 +97,7 @@ interface CellProps {
 const Cell = React.memo((props: CellProps) => {
     const converter = new Convert();
 
-    return <Wrapper>
+    return <Wrapper initial={!props.noAnimation && {y: -20, opacity: 0}} animate={{y: 0, opacity: 1}}>    
         <Remove title="Remove cell" onClick={() => props.onRemove(props.index)}><MdClose/> </Remove>
         <CodeMirror
             onChange={code => props.onChange(props.index, code)}

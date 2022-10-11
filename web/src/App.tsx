@@ -135,15 +135,17 @@ function App() {
   return <div className="App">
       <Menu />
       {loaded && <Workspace>
-        { prevSession.length > 0 && <Prompt
+        <Prompt
           title="Welcome back!"
+          show={prevSession.length > 0}
           action="Restore session"
           handleAction={restoreSession}
         >
              You have a previous session saved since last time.
-        </Prompt>}
+        </Prompt>
         {cells.map((cell, index) => <Cell
           key={index}
+          noAnimation={index == 0}
           code={cell.code}
           output={cell.output}
           onChange={onChange}

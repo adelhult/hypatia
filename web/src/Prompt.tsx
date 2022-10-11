@@ -1,8 +1,9 @@
 import styled from 'styled-components';
 import { MdClose } from "react-icons/md";
 import { useState } from "react";
+import { motion, AnimatePresence } from 'framer-motion';
 
-const Box = styled.div`
+const Box = styled(motion.div)`
     position: relative;
     display: flex;
     flex-direction: column;
@@ -61,23 +62,32 @@ interface PromptProps {
     children: React.ReactNode;
     action: string;
     title?: string;
+    show: boolean;
     handleAction: () => void;
 }
 
 export default function Prompt(props: PromptProps) {
     const [show, setShow] = useState(true);
 
-    return show ? <Box className="Prompt">
-        <Remove
-            title="Close prompt"
-            onClick={() => setShow(false)}
+    return <AnimatePresence>
+        {show && props.show && <Box
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{x: 50, opacity: 0}}
+            className="Prompt"
         >
-            <MdClose style={{color:"white"}}/>
-        </Remove>
-        {props.title && <Title>{props.title}</Title>}
-        {props.children}
-        <Action onClick={props.handleAction}>
-            {props.action}
-        </Action>
-    </Box> : null;
+            <Remove
+                title="Close prompt"
+                onClick={() => setShow(false)}
+            >
+                <MdClose style={{color:"white"}}/>
+            </Remove>
+            {props.title && <Title>{props.title}</Title>}
+            {props.children}
+            <Action onClick={props.handleAction}>
+                {props.action}
+            </Action>
+        </Box>
+    }
+    </AnimatePresence>
 }
