@@ -40,6 +40,12 @@ fn refresh(cell_index: usize, cells: &mut Vec<Cell>) {
 }
 
 #[wasm_bindgen]
+pub fn clear_state() {
+    let mut cells = STATE.lock().unwrap();
+    cells.clear();
+}
+
+#[wasm_bindgen]
 pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
     let mut cells = STATE.lock().unwrap();
 

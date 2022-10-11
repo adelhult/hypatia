@@ -1,7 +1,8 @@
 import Menu from "./Menu";
 import Cell from "./Cell";
+import Prompt from "./Prompt";
 import styled from "styled-components";
-import init, { read_cell, write_cell, insert_cell, remove_cell } from 'web_bindings';
+import init, { read_cell, write_cell, insert_cell, remove_cell, clear_state } from 'web_bindings';
 import { MdAddCircleOutline } from "react-icons/md";
 import { useEffect, useState } from "react";
 
@@ -32,7 +33,7 @@ const Action = styled.button`
   margin-top: 0.5rem;
   margin-right: 0.5rem;
   border: none;
-  border-radius: 5px;
+  border-radius: 0.2rem;
 `;
 
 type Cell = {
@@ -42,6 +43,7 @@ type Cell = {
 
 function App() {
   const [loaded, setLoaded] = useState(false);
+  const [prevSession, setPreviousSession] = useState<Array<string>>([]);
   const [cells, setCells] = useState<Array<Cell>>([{
     code: '',
     output: '',
@@ -54,6 +56,31 @@ function App() {
       insert_cell(0);
     });
   }, []);
+
+  // Check if there is content in local storage from a previous session
+  useEffect(() => {
+      let parsedData = localStorage.getItem('cells');
+      if (!parsedData) {
+        return;
+      }
+
+      const prevCells: Array<string> = JSON.parse(parsedData);
+      
+      if (prevCells.length === 0) {
+        return;
+      }
+
+      if (prevCells.every(code => code.length === 0)) {
+        return;
+      }
+
+      setPreviousSession(prevCells);
+  }, []);
+
+  // Keep local storage in sync with the current state
+  useEffect(() => {
+    localStorage.setItem('cells', JSON.stringify(cells.map(cell => cell.code)));
+  }), [cells];
 
   const onChange = (changed_cell_index: number, code: string) => {
     if (!loaded) return;
@@ -71,6 +98,7 @@ function App() {
 
   const addCell = () => {
     insert_cell(cells.length);
+
     setCells(oldCells => {
       let cells = [...oldCells];
       cells.push({
@@ -91,9 +119,29 @@ function App() {
     });
   }
 
+  // restore the previous session
+  const restoreSession = () => {
+    clear_state();
+    prevSession.forEach((code, index) => {
+      insert_cell(index);
+      write_cell(index, code)
+    });
+
+    setCells(prevSession.map(code => ({code: code, output: ''})));
+    
+    setPreviousSession([]);
+  };
+
   return <div className="App">
       <Menu />
       {loaded && <Workspace>
+        { prevSession.length > 0 && <Prompt
+          title="Welcome back!"
+          action="Restore session"
+          handleAction={restoreSession}
+        >
+             You have a previous session saved since last time.
+        </Prompt>}
         {cells.map((cell, index) => <Cell
           key={index}
           code={cell.code}
