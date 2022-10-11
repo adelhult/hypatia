@@ -28,7 +28,7 @@ export default function Menu() {
     return <Container className="Menu">
         <LogoContainer>
             <Logo src="logo.png"></Logo>
-            <LogoText><strong>Hypatia</strong><br/> Notebook</LogoText>
+            <LogoText><strong>Hypatia</strong><br/>Calculator</LogoText>
         </LogoContainer>
     </Container>
 }
