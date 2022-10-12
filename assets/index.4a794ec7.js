@@ -37606,11 +37606,11 @@ const AnswerText = styled.span`
 `;
 const Wrapper = styled(motion.div)`
     position: relative;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
     border: solid;
     border-width: 1px;
     border-color: #d0d0d7;
     margin-bottom: 1rem;
+    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
 `;
 const Remove$1 = styled.button`
     z-index: 1000;
@@ -37714,7 +37714,7 @@ const Box = styled(motion.div)`
     padding: 1rem;
     box-sizing: border-box;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
+    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
 `;
 const Remove = styled.button`
     z-index: 1000;
