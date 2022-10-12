@@ -11319,18 +11319,18 @@ class LayerCursor {
   }
 }
 class HeapCursor {
-  constructor(heap) {
-    this.heap = heap;
+  constructor(heap2) {
+    this.heap = heap2;
   }
   static from(sets, skip = null, minPoint = -1) {
-    let heap = [];
+    let heap2 = [];
     for (let i = 0; i < sets.length; i++) {
       for (let cur2 = sets[i]; !cur2.isEmpty; cur2 = cur2.nextLayer) {
         if (cur2.maxPoint >= minPoint)
-          heap.push(new LayerCursor(cur2, skip, minPoint, i));
+          heap2.push(new LayerCursor(cur2, skip, minPoint, i));
       }
     }
-    return heap.length == 1 ? heap[0] : new HeapCursor(heap);
+    return heap2.length == 1 ? heap2[0] : new HeapCursor(heap2);
   }
   get startSide() {
     return this.value ? this.value.startSide : 0;
@@ -11368,20 +11368,20 @@ class HeapCursor {
     }
   }
 }
-function heapBubble(heap, index2) {
-  for (let cur2 = heap[index2]; ; ) {
+function heapBubble(heap2, index2) {
+  for (let cur2 = heap2[index2]; ; ) {
     let childIndex = (index2 << 1) + 1;
-    if (childIndex >= heap.length)
+    if (childIndex >= heap2.length)
       break;
-    let child = heap[childIndex];
-    if (childIndex + 1 < heap.length && child.compare(heap[childIndex + 1]) >= 0) {
-      child = heap[childIndex + 1];
+    let child = heap2[childIndex];
+    if (childIndex + 1 < heap2.length && child.compare(heap2[childIndex + 1]) >= 0) {
+      child = heap2[childIndex + 1];
       childIndex++;
     }
     if (cur2.compare(child) < 0)
       break;
-    heap[childIndex] = cur2;
-    heap[index2] = child;
+    heap2[childIndex] = cur2;
+    heap2[index2] = child;
     index2 = childIndex;
   }
 }
@@ -37604,6 +37604,11 @@ const AnswerText = styled.span`
   opacity: 0.7;
   font-size: 0.8rem;  
 `;
+const Time = styled.span`
+    font-size: 0.8rem;
+    opacity: 0.7;
+    float: right;
+`;
 const Wrapper = styled(motion.div)`
     position: relative;
     border: solid;
@@ -37666,6 +37671,7 @@ const theme = createTheme({
   }]
 });
 const Cell = React.memo((props) => {
+  var _a2;
   const converter = new ansi_to_html();
   return /* @__PURE__ */ jsxs(Wrapper, {
     initial: !props.noAnimation && {
@@ -37693,6 +37699,8 @@ const Cell = React.memo((props) => {
     }), props.code && /* @__PURE__ */ jsxs(Result, {
       children: [/* @__PURE__ */ jsx(AnswerText, {
         children: "Answer:"
+      }), /* @__PURE__ */ jsx(Time, {
+        children: (_a2 = props.time) != null ? _a2 : ""
       }), /* @__PURE__ */ jsx("pre", {
         children: /* @__PURE__ */ jsx(ResultData, {
           dangerouslySetInnerHTML: {
@@ -37789,10 +37797,33 @@ function Prompt(props) {
   });
 }
 let wasm;
-function clear_state() {
-  wasm.clear_state();
+const heap = new Array(32).fill(void 0);
+heap.push(void 0, null, true, false);
+function getObject(idx) {
+  return heap[idx];
 }
-let WASM_VECTOR_LEN = 0;
+let heap_next = heap.length;
+function dropObject(idx) {
+  if (idx < 36)
+    return;
+  heap[idx] = heap_next;
+  heap_next = idx;
+}
+function takeObject(idx) {
+  const ret = getObject(idx);
+  dropObject(idx);
+  return ret;
+}
+function addHeapObject(obj) {
+  if (heap_next === heap.length)
+    heap.push(heap.length + 1);
+  const idx = heap_next;
+  heap_next = heap[idx];
+  heap[idx] = obj;
+  return idx;
+}
+const cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
+cachedTextDecoder.decode();
 let cachedUint8Memory0 = new Uint8Array();
 function getUint8Memory0() {
   if (cachedUint8Memory0.byteLength === 0) {
@@ -37800,6 +37831,13 @@ function getUint8Memory0() {
   }
   return cachedUint8Memory0;
 }
+function getStringFromWasm0(ptr, len) {
+  return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
+}
+function clear_state() {
+  wasm.clear_state();
+}
+let WASM_VECTOR_LEN = 0;
 const cachedTextEncoder = new TextEncoder("utf-8");
 const encodeString = typeof cachedTextEncoder.encodeInto === "function" ? function(arg, view) {
   return cachedTextEncoder.encodeInto(arg, view);
@@ -37879,11 +37917,6 @@ function insert_cell(cell_index) {
 function remove_cell(cell_index) {
   wasm.remove_cell(cell_index);
 }
-const cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
-cachedTextDecoder.decode();
-function getStringFromWasm0(ptr, len) {
-  return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
-}
 function read_cell(cell_index) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
@@ -37894,6 +37927,32 @@ function read_cell(cell_index) {
   } finally {
     wasm.__wbindgen_add_to_stack_pointer(16);
     wasm.__wbindgen_free(r0, r1);
+  }
+}
+function read_cell_time(cell_index) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+    wasm.read_cell_time(retptr, cell_index);
+    var r0 = getInt32Memory0()[retptr / 4 + 0];
+    var r1 = getInt32Memory0()[retptr / 4 + 1];
+    let v0;
+    if (r0 !== 0) {
+      v0 = getStringFromWasm0(r0, r1).slice();
+      wasm.__wbindgen_free(r0, r1 * 1);
+    }
+    return v0;
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16);
+  }
+}
+function isLikeNone(x2) {
+  return x2 === void 0 || x2 === null;
+}
+function handleError(f2, args) {
+  try {
+    return f2.apply(this, args);
+  } catch (e2) {
+    wasm.__wbindgen_exn_store(addHeapObject(e2));
   }
 }
 async function load(module, imports) {
@@ -37923,6 +37982,66 @@ async function load(module, imports) {
 function getImports() {
   const imports = {};
   imports.wbg = {};
+  imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
+    takeObject(arg0);
+  };
+  imports.wbg.__wbindgen_object_clone_ref = function(arg0) {
+    const ret = getObject(arg0);
+    return addHeapObject(ret);
+  };
+  imports.wbg.__wbg_now_c2563c77371d3ec4 = function(arg0) {
+    const ret = getObject(arg0).now();
+    return ret;
+  };
+  imports.wbg.__wbg_instanceof_Window_42f092928baaee84 = function(arg0) {
+    const ret = getObject(arg0) instanceof Window;
+    return ret;
+  };
+  imports.wbg.__wbg_performance_6a3706d0a3ba1118 = function(arg0) {
+    const ret = getObject(arg0).performance;
+    return isLikeNone(ret) ? 0 : addHeapObject(ret);
+  };
+  imports.wbg.__wbg_newnoargs_971e9a5abe185139 = function(arg0, arg1) {
+    const ret = new Function(getStringFromWasm0(arg0, arg1));
+    return addHeapObject(ret);
+  };
+  imports.wbg.__wbg_call_33d7bcddbbfa394a = function() {
+    return handleError(function(arg0, arg1) {
+      const ret = getObject(arg0).call(getObject(arg1));
+      return addHeapObject(ret);
+    }, arguments);
+  };
+  imports.wbg.__wbg_self_fd00a1ef86d1b2ed = function() {
+    return handleError(function() {
+      const ret = self.self;
+      return addHeapObject(ret);
+    }, arguments);
+  };
+  imports.wbg.__wbg_window_6f6e346d8bbd61d7 = function() {
+    return handleError(function() {
+      const ret = window.window;
+      return addHeapObject(ret);
+    }, arguments);
+  };
+  imports.wbg.__wbg_globalThis_3348936ac49df00a = function() {
+    return handleError(function() {
+      const ret = globalThis.globalThis;
+      return addHeapObject(ret);
+    }, arguments);
+  };
+  imports.wbg.__wbg_global_67175caf56f55ca9 = function() {
+    return handleError(function() {
+      const ret = global.global;
+      return addHeapObject(ret);
+    }, arguments);
+  };
+  imports.wbg.__wbindgen_is_undefined = function(arg0) {
+    const ret = getObject(arg0) === void 0;
+    return ret;
+  };
+  imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+    throw new Error(getStringFromWasm0(arg0, arg1));
+  };
   return imports;
 }
 function finalizeInit(instance, module) {
@@ -37999,7 +38118,7 @@ function App() {
   }, []);
   react.exports.useEffect(() => {
     localStorage.setItem("cells", JSON.stringify(cells.map((cell) => cell.code)));
-  });
+  }, [cells]);
   const onChange = (changed_cell_index, code) => {
     if (!loaded)
       return;
@@ -38009,6 +38128,7 @@ function App() {
       cells2[changed_cell_index].code = code;
       updatedCells.forEach((index2) => {
         cells2[index2].output = read_cell(index2);
+        cells2[index2].time = read_cell_time(index2);
       });
       return cells2;
     });
@@ -38057,6 +38177,7 @@ function App() {
         noAnimation: index2 == 0,
         code: cell.code,
         output: cell.output,
+        time: cell.time,
         onChange,
         onRemove: removeCell,
         addCellAction: addCell,
