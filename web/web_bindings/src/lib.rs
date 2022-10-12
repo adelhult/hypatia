@@ -4,6 +4,7 @@ use cfg_if::cfg_if;
 use hypatia_lib::{eval, parse, report_error, Environment, Error};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+use std::time::Duration;
 use wasm_bindgen::prelude::*;
 
 cfg_if! {
@@ -18,6 +19,7 @@ cfg_if! {
 struct Cell {
     environment: Environment,
     source_code: String,
+    runtime: Option<Duration>,
     output: Result<String, Vec<Error>>,
 }
 
@@ -35,7 +37,10 @@ fn refresh(cell_index: usize, cells: &mut Vec<Cell>) {
     };
 
     let cell = &mut cells[cell_index];
-    cell.output = run(&cell.source_code, &mut env);
+
+    let (output, runtime) = run(&cell.source_code, &mut env);
+    cell.output = output;
+    cell.runtime = Some(runtime);
     cell.environment = env;
 }
 
@@ -59,9 +64,11 @@ pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
     let cell = cells.get_mut(cell_index).expect("Invalid cell index");
 
     // Update the current cell
+    let (output, runtime) = run(code, &mut env);
     *cell = Cell {
         source_code: code.to_string(),
-        output: run(code, &mut env),
+        output,
+        runtime: Some(runtime),
         environment: env,
     };
 
@@ -91,6 +98,7 @@ pub fn insert_cell(cell_index: usize) {
             environment: Environment::new(),
             source_code: String::new(),
             output: Ok(String::new()),
+            runtime: None,
         },
     );
 }
@@ -118,8 +126,27 @@ pub fn read_cell(cell_index: usize) -> String {
     }
 }
 
-fn run(code: &str, env: &mut Environment) -> Result<String, Vec<Error>> {
-    let ast = parse(code)?;
-    let value = eval(&ast, env).map_err(|error| vec![error])?;
-    Ok(format!("{value}"))
+#[wasm_bindgen]
+pub fn read_cell_time(cell_index: usize) -> Option<String> {
+    let cells = STATE.lock().unwrap();
+    let cell = cells.get(cell_index).expect("Invalid cell index");
+
+    cell.runtime.map(|time| format!("{} ms", time.as_millis()))
+}
+
+fn run(code: &str, env: &mut Environment) -> (Result<String, Vec<Error>>, Duration) {
+    let start_time = wasm_timer::Instant::now();
+    let ast = parse(code);
+
+    if let Err(errors) = ast {
+        return (Err(errors), start_time.elapsed());
+    }
+
+    let value = eval(&ast.unwrap(), env);
+
+    if let Err(error) = value {
+        return (Err(vec![error]), start_time.elapsed());
+    }
+
+    (Ok(format!("{}", value.unwrap())), start_time.elapsed())
 }
