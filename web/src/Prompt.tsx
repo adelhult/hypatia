@@ -14,7 +14,7 @@ const Box = styled(motion.div)`
     padding: 1rem;
     box-sizing: border-box;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.3);
+    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
 `;
 
 const Remove = styled.button`
