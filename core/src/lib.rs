@@ -15,6 +15,7 @@ mod error;
 mod eval;
 mod expr;
 mod parser;
+mod number;
 #[allow(dead_code)]
 mod trie;
 mod units;

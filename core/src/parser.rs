@@ -201,7 +201,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         let ident = select! {Token::Ident(i) => i}.labelled("identifier");
 
         let number = select! {
-            Token::Number(n) => n.parse().expect("Could not parse number")
+            Token::Number(n) => n
         };
 
         let quantity = number

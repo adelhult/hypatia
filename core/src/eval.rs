@@ -2,6 +2,7 @@ use num::rational::Ratio;
 
 use crate::{
     expr::{BinOp, Literal, Spanned, UnaryOp},
+    number::Number,
     parse,
     trie::StringTrie,
     units::{BaseUnit, Quantity, Unit},
@@ -46,8 +47,8 @@ impl Value {
         }
     }
 
-    pub fn number(&self) -> Result<f64, Error> {
-        Ok(self.quantity()?.0)
+    pub fn number(&self) -> Result<Number, Error> {
+        Ok(self.quantity()?.number)
     }
 }
 
@@ -77,7 +78,7 @@ struct Entry<T> {
 pub struct Environment {
     variables: Vec<HashMap<String, Value>>,
     units: HashMap<String, Entry<Unit>>,
-    prefixes: StringTrie<Entry<f64>>,
+    prefixes: StringTrie<Entry<Number>>,
 }
 
 impl Environment {
@@ -104,7 +105,10 @@ impl Environment {
         // First check if the identifer is actually a unit.
         // Units used as variable will return a quantity of 1 of that unit.
         if let Ok(unit) = self.get_unit(name) {
-            return Ok(Value::Quantity(Quantity(1.0, unit)));
+            return Ok(Value::Quantity(Quantity {
+                number: Number::one(),
+                unit,
+            }));
         }
 
         // Otherwise go through all of the scopes to find the the variable
@@ -157,8 +161,8 @@ impl Environment {
         // handle derived units
         // unit mile mi = 1 609.344 m
         if let Some(value) = derivation {
-            if let Value::Quantity(Quantity(mag, unit)) = value {
-                derived_unit = Unit(mag * unit.0, unit.1.clone());
+            if let Value::Quantity(Quantity { number, unit }) = value {
+                derived_unit = Unit(number.clone() * unit.0.clone(), unit.1.clone());
             } else {
                 // The rhs must also be quantity otherwise we
                 // can't derive the new unit in any sensible way
@@ -167,7 +171,7 @@ impl Environment {
         } else {
             // In the case of a base unit, just make a derived unit consisting of the base unit scaled by 1
             let base_unit = BaseUnit(long_name.to_string(), short_name.clone());
-            derived_unit = Unit(1.0, [(base_unit, Ratio::new(1, 1))].into());
+            derived_unit = Unit(Number::one(), [(base_unit, Ratio::new(1, 1))].into());
         }
 
         // add the unit
@@ -232,7 +236,12 @@ impl Environment {
         self.variables.pop();
     }
 
-    fn declare_prefix(&mut self, name: &str, value: f64, is_long_name: bool) -> Result<(), Error> {
+    fn declare_prefix(
+        &mut self,
+        name: &str,
+        value: Number,
+        is_long_name: bool,
+    ) -> Result<(), Error> {
         if self.prefixes.contains_key(name) {
             Err(Error::OccupiedName(name.to_string()))
         } else {
@@ -308,7 +317,7 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         }
         Expr::PrefixDecl(long_name, short_name, rhs) => {
             let value = eval(rhs, env)?.number()?; // FIXME: ensure that it is dimensionless
-            env.declare_prefix(long_name, value, true)?;
+            env.declare_prefix(long_name, value.clone(), true)?;
             if let Some(name) = short_name {
                 env.declare_prefix(name, value, false)?;
             }
@@ -339,13 +348,16 @@ fn eval_literal(literal: &Literal, env: &mut Environment) -> Result<Value, Error
     Ok(match literal {
         Literal::Nothing => Value::Nothing,
         Literal::Bool(b) => Value::Bool(*b),
-        Literal::Quantity(magnitude, name) => {
+        Literal::Quantity(number, name) => {
             let unit = if let Some(name) = name {
                 env.get_unit(name)?
             } else {
                 Unit::unitless()
             };
-            Value::Quantity(Quantity(*magnitude, unit))
+            Value::Quantity(Quantity {
+                number: Number::from_decimal_str(number),
+                unit,
+            })
         }
     })
 }

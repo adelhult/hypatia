@@ -34,7 +34,7 @@ pub enum BinOp {
 pub enum Literal {
     Nothing,
     Bool(bool),
-    Quantity(f64, Option<String>),
+    Quantity(String, Option<String>),
 }
 
 pub type Span = std::ops::Range<usize>;

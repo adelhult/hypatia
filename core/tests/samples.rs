@@ -82,3 +82,8 @@ fn unary_operators() {
 fn unicode_ident() {
     run_test_file(Path::new("./samples/unicode_ident.hyp"));
 }
+
+#[test]
+fn decimal() {
+    run_test_file(Path::new("./samples/decimal.hyp"));
+}
