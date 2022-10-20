@@ -1,6 +1,8 @@
+mod format;
 mod utils;
 
 use cfg_if::cfg_if;
+use format::{get_formats, Format};
 use hypatia_lib::{eval, parse, report_error, Environment, Error};
 use lazy_static::lazy_static;
 use std::sync::Mutex;
@@ -20,7 +22,7 @@ struct Cell {
     environment: Environment,
     source_code: String,
     runtime: Option<Duration>,
-    output: Result<String, Vec<Error>>,
+    output: Result<Vec<Format>, Vec<Error>>,
 }
 
 lazy_static! {
@@ -29,6 +31,7 @@ lazy_static! {
 
 static STATE: Mutex<Vec<Cell>> = Mutex::new(Vec::new());
 
+/// Re-run the code for a cell
 fn refresh(cell_index: usize, cells: &mut Vec<Cell>) {
     let mut env = if cell_index == 0 {
         EMPTY_ENV.clone()
@@ -97,7 +100,7 @@ pub fn insert_cell(cell_index: usize) {
         Cell {
             environment: Environment::new(),
             source_code: String::new(),
-            output: Ok(String::new()),
+            output: Ok(Vec::new()),
             runtime: None,
         },
     );
@@ -118,7 +121,14 @@ pub fn read_cell(cell_index: usize) -> String {
     let cell = cells.get(cell_index).expect("Invalid cell index");
 
     match &cell.output {
-        Ok(result) => result.clone(),
+        Ok(result) => result
+            .get(0)
+            .cloned()
+            .map(|Format { repr, name: _ }| repr)
+            .unwrap_or_else(|| {
+                "".to_string()
+            }),
+
         Err(errors) => errors
             .iter()
             .map(|e| report_error(e.clone(), &cell.source_code))
@@ -134,7 +144,7 @@ pub fn read_cell_time(cell_index: usize) -> Option<String> {
     cell.runtime.map(|time| format!("{} ms", time.as_millis()))
 }
 
-fn run(code: &str, env: &mut Environment) -> (Result<String, Vec<Error>>, Duration) {
+fn run(code: &str, env: &mut Environment) -> (Result<Vec<Format>, Vec<Error>>, Duration) {
     let start_time = wasm_timer::Instant::now();
     let ast = parse(code);
 
@@ -148,5 +158,5 @@ fn run(code: &str, env: &mut Environment) -> (Result<String, Vec<Error>>, Durati
         return (Err(vec![error]), start_time.elapsed());
     }
 
-    (Ok(format!("{}", value.unwrap())), start_time.elapsed())
+    (Ok(get_formats(&value.unwrap())), start_time.elapsed())
 }
