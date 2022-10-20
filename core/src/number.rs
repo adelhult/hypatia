@@ -46,7 +46,7 @@ impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Exact(n) => write!(f, "{}", n),
-            Approx(n) => write!(f, "Approx. {}", n),
+            Approx(n) => write!(f, "{}", n),
         }
     }
 }
