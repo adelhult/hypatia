@@ -120,14 +120,16 @@ pub fn read_cell(cell_index: usize) -> String {
     let cells = STATE.lock().unwrap();
     let cell = cells.get(cell_index).expect("Invalid cell index");
 
+    // This crate includes a notion of Formats which offer different
+    // ways of representing a Value. To send all of the representations
+    // over to the frontend a single string with "%%%" used as separator
+    // The name and value is seperated from each other by "###"
     match &cell.output {
         Ok(result) => result
-            .get(0)
+            .iter()
             .cloned()
-            .map(|Format { repr, name: _ }| repr)
-            .unwrap_or_else(|| {
-                "".to_string()
-            }),
+            .map(|Format { repr, name }| format!("{repr}###{name}%%%"))
+            .collect(),
 
         Err(errors) => errors
             .iter()

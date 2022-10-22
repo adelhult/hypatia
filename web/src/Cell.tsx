@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {createTheme} from '@uiw/codemirror-themes';
 import {keymap} from "@codemirror/view"
 import CodeMirror from '@uiw/react-codemirror';
@@ -32,7 +32,9 @@ const AnswerText = styled.span`
 const Time = styled.span`
     font-size: 0.8rem;
     opacity: 0.7;
-    float: right;
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
 `;
 
 const Wrapper = styled(motion.div)`
@@ -59,6 +61,25 @@ const Remove = styled.button`
     &:hover {
         opacity: 1;
     }
+`;
+
+const Formats = styled.div`
+    display: flex;
+    gap: 0.5rem;
+    right: 0.5rem;
+    position: absolute;
+`;
+
+const FormatButton = styled.button`
+    border: solid;
+    border-width: 1px;
+    border-color: ##d9d9d9;
+    background: white;
+    color: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem;
+    border-radius: 0.2rem;
+    transition: all 0.3s;
 `;
 
 
@@ -97,7 +118,7 @@ interface CellProps {
     code: string,
     output: string,
     time?: string,
-    index : number,
+    index: number,
     noAnimation?: boolean,
     addCellAction: () => void,
     onRemove: (cell_index: number) => void,
@@ -106,6 +127,20 @@ interface CellProps {
 
 const Cell = React.memo((props: CellProps) => {
     const converter = new Convert();
+    const [currentFormat, setCurrentFormat] = useState<null | string>(null);
+
+    // Read the output.
+    // First split the output into each format (seperated by %%%)
+    // and then between the name and value which is seperated by ###
+    const output = props.output
+        .split("%%%")
+        .map(format => {
+            let [value, name] = format.split("###");
+            return [value, name];
+        });
+
+    const [outputValue, outputFormat] = output
+        ?.find(([value, name]) => name === currentFormat) ?? output[0];
 
     return <Wrapper initial={!props.noAnimation && {y: -20, opacity: 0}} animate={{y: 0, opacity: 1}}>
         <Remove title="Remove cell" onClick={() => props.onRemove(props.index)}><MdClose/> </Remove>
@@ -121,9 +156,21 @@ const Cell = React.memo((props: CellProps) => {
             }}
         />
         {props.code && <Result>
-            <AnswerText>Answer:</AnswerText>
+            <Formats>
+                {output.map(([value, format]) => format && <FormatButton
+                    style={{opacity: format === outputFormat ? 1 : 0.3}}
+                    key={format}
+                    onClick={() => setCurrentFormat(format)}
+                    >
+                    {format}
+                </FormatButton>)
+                }
+            </Formats>
+            <AnswerText>answer({props.index}) = </AnswerText>
             <Time>{props.time ?? ""}</Time>
-            <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(props.output)}}/></pre>
+            <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(outputValue)}}/>
+            </pre>
+
         </Result>}
     </Wrapper>
 });
