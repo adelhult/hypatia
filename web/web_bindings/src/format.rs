@@ -45,7 +45,7 @@ fn approx(value: &Value) -> Option<Format> {
 
 fn debug(value: &Value) -> Option<Format> {
     Some(Format {
-        repr: format!("{value:?}"),
+        repr: format!("{value:#?}"),
         name: "Debug".to_string(),
     })
 }
