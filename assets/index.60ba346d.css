@@ -15,6 +15,6 @@ body {
 }
 
 .cm-editor .cm-content {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
 }
