@@ -37607,7 +37607,9 @@ const AnswerText = styled.span`
 const Time = styled.span`
     font-size: 0.8rem;
     opacity: 0.7;
-    float: right;
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
 `;
 const Wrapper = styled(motion.div)`
     position: relative;
@@ -37632,6 +37634,23 @@ const Remove$1 = styled.button`
     &:hover {
         opacity: 1;
     }
+`;
+const Formats = styled.div`
+    display: flex;
+    gap: 0.5rem;
+    right: 0.5rem;
+    position: absolute;
+`;
+const FormatButton = styled.button`
+    border: solid;
+    border-width: 1px;
+    border-color: ##d9d9d9;
+    background: white;
+    color: inherit;
+    font-size: 0.8rem;
+    padding: 0.2rem;
+    border-radius: 0.2rem;
+    transition: all 0.3s;
 `;
 const hotkeys = (addCellAction) => keymap.of([{
   key: "Alt-Enter",
@@ -37671,8 +37690,14 @@ const theme = createTheme({
   }]
 });
 const Cell = React.memo((props) => {
-  var _a2;
+  var _a2, _b;
   const converter = new ansi_to_html();
+  const [currentFormat, setCurrentFormat] = react.exports.useState(null);
+  const output = props.output.split("%%%").map((format) => {
+    let [value, name2] = format.split("###");
+    return [value, name2];
+  });
+  const [outputValue, outputFormat] = (_a2 = output == null ? void 0 : output.find(([value, name2]) => name2 === currentFormat)) != null ? _a2 : output[0];
   return /* @__PURE__ */ jsxs(Wrapper, {
     initial: !props.noAnimation && {
       y: -20,
@@ -37697,14 +37722,22 @@ const Cell = React.memo((props) => {
         lineNumbers: props.code.match("\n") != null
       }
     }), props.code && /* @__PURE__ */ jsxs(Result, {
-      children: [/* @__PURE__ */ jsx(AnswerText, {
-        children: "Answer:"
+      children: [/* @__PURE__ */ jsx(Formats, {
+        children: output.map(([value, format]) => format && /* @__PURE__ */ jsx(FormatButton, {
+          style: {
+            opacity: format === outputFormat ? 1 : 0.3
+          },
+          onClick: () => setCurrentFormat(format),
+          children: format
+        }, format))
+      }), /* @__PURE__ */ jsxs(AnswerText, {
+        children: ["answer(", props.index, ") = "]
       }), /* @__PURE__ */ jsx(Time, {
-        children: (_a2 = props.time) != null ? _a2 : ""
+        children: (_b = props.time) != null ? _b : ""
       }), /* @__PURE__ */ jsx("pre", {
         children: /* @__PURE__ */ jsx(ResultData, {
           dangerouslySetInnerHTML: {
-            __html: converter.toHtml(props.output)
+            __html: converter.toHtml(outputValue)
           }
         })
       })]
