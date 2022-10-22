@@ -12,7 +12,7 @@ const Result = styled.div`
     padding:0.5rem;
     box-sizing: border-box;
     background-color: #ededed;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     margin-top: 0;
 `;
 
