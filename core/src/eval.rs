@@ -1,7 +1,7 @@
 use num::rational::Ratio;
 
 use crate::{
-    expr::{BinOp, Literal, Spanned, UnaryOp},
+    expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp},
     number::Number,
     parse,
     trie::StringTrie,
@@ -355,7 +355,12 @@ fn eval_literal(literal: &Literal, env: &mut Environment) -> Result<Value, Error
                 Unit::unitless()
             };
             Value::Quantity(Quantity {
-                number: Number::from_decimal_str(number),
+                number: match number {
+                    NumberLiteral::Binary(n) => Number::from_binary_str(n),
+                    NumberLiteral::Decimal(n) => Number::from_decimal_str(n),
+                    NumberLiteral::Hex(n) => Number::from_hex_str(n),
+                    NumberLiteral::Scientific(base, exp, neg_sign) => Number::from_scientific_str(base, exp, *neg_sign),
+                },
                 unit,
             })
         }

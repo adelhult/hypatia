@@ -1,6 +1,6 @@
 use num::{
     bigint::{BigInt, ToBigInt},
-    BigRational, ToPrimitive,
+    BigRational, ToPrimitive, Num,
 };
 use std::{fmt, ops, str::FromStr};
 
@@ -18,15 +18,52 @@ impl Number {
         ))
     }
 
-    // Convert something like 123.2 into 1232/10
+    /// Convert something like "123.2" into 1232/10
     pub fn from_decimal_str(s: &str) -> Self {
         match s.split_once('.') {
             Some((integer, decimal)) => Exact(BigRational::new(
                 BigInt::from_str(&format!("{integer}{decimal}")).unwrap(),
-                10.to_bigint().unwrap().pow(decimal.chars().count() as u32)
+                10.to_bigint().unwrap().pow(decimal.chars().count() as u32),
             )),
             None => Number::new(s.parse::<i64>().expect("Could not parse as a number")),
         }
+    }
+
+    /// Convert a string written in engineering/scientific form 1.5e3
+    pub fn from_scientific_str(decimal: &str, exp: &str, is_negative: bool) -> Self {
+        let decimal = Self::from_decimal_str(decimal);
+
+        // 10 ^ exp
+        let exp = u32::from_str_radix(exp, 10).unwrap();
+        let number = 10.to_bigint().unwrap().pow(exp);
+
+        let scaling = Exact(if is_negative {
+            // 1 / 10^number
+            BigRational::new(1.to_bigint().unwrap(), number)
+        } else {
+            // 10^number / 1
+            BigRational::new(number, 1.to_bigint().unwrap())
+        });
+
+        decimal * scaling
+    }
+
+    /// Convert a binary string like "01010" into a Number
+    pub fn from_binary_str(s: &str) -> Self {
+        Self::from_radix_str(s, 2)
+    }
+
+    /// Convert a hex string like "12ABC" into a Number
+    pub fn from_hex_str(s: &str) -> Self {
+        Self::from_radix_str(s, 16)
+    }
+
+    /// Convert a string in a given base to a Number
+    fn from_radix_str(s: &str, radix: u32) -> Self {
+        Exact(BigRational::new(
+            BigInt::from_str_radix(s, radix).expect("Not a base 2 number"),
+            1.to_bigint().unwrap(),
+        ))
     }
 
     pub fn one() -> Self {

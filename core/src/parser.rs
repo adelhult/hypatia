@@ -43,7 +43,10 @@ pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Token {
     Ident(String),
-    Number(String),
+    DecimalNum(String),
+    BinaryNum(String),
+    HexNum(String),
+    ScientificNum(String, String, bool),
     Bool(bool),
     Unit,
     Update,
@@ -79,7 +82,16 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::Ident(x) => write!(f, "{}", x),
-            Token::Number(x) => write!(f, "{}", x),
+            Token::DecimalNum(x) => write!(f, "{}", x),
+            Token::BinaryNum(x) => write!(f, "{}", x),
+            Token::ScientificNum(base, exponent, neg_sign) => {
+                if *neg_sign {
+                    write!(f, "{base}E-{exponent}")
+                } else {
+                    write!(f, "{base}E{exponent}")
+                }
+            }
+            Token::HexNum(x) => write!(f, "{}", x),
             Token::Bool(x) => write!(f, "{}", x),
             Token::Unit => write!(f, "unit"),
             Token::If => write!(f, "if"),
@@ -123,10 +135,33 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     // parse number
     let frac = just('.').chain(text::digits(10));
 
-    // 13(.37)?
-    let decimal_form = text::int(10).chain::<char, _, _>(frac.or_not().flatten());
+    // 13(.37) or .32
+    let decimal_form = text::int(10)
+        .chain::<char, _, _>(frac.or_not().flatten())
+        .or(frac)
+        .collect::<String>();
 
-    let number = decimal_form.or(frac).collect::<String>().map(Token::Number);
+    // Base 10 numbers The "or frac" part is to allow for .25 as well
+    let decimal = decimal_form.map(Token::DecimalNum);
+
+    // binary literals 0b1010
+    let binary = just("0b")
+        .ignore_then(text::int::<_, Simple<char>>(2))
+        .map(Token::BinaryNum);
+
+    // hexadecimal literals 0xff
+    let hex = just("0x")
+        .ignore_then(text::int::<_, Simple<char>>(16))
+        .map(Token::HexNum);
+
+    // scientific form 1.5e-2
+    let e = just('e').or(just('E'));
+
+    let scientific = decimal_form
+        .then_ignore(e)
+        .then(just('-').or_not())
+        .then(text::int::<_, Simple<char>>(10))
+        .map(|((base, sign), exponent)| Token::ScientificNum(base, exponent, sign.is_some()));
 
     // operators
     let ops = select! {
@@ -173,7 +208,10 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     let comment = just("//").then(take_until(just('\n'))).to(Token::Comment);
 
     let token = comment
-        .or(number)
+        .or(binary)
+        .or(hex)
+        .or(scientific)
+        .or(decimal)
         .or(control)
         .or(ops)
         .or(keywords_and_idents)
@@ -201,7 +239,10 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         let ident = select! {Token::Ident(i) => i}.labelled("identifier");
 
         let number = select! {
-            Token::Number(n) => n
+            Token::DecimalNum(n) => NumberLiteral::Decimal(n),
+            Token::BinaryNum(n) => NumberLiteral::Binary(n),
+            Token::HexNum(n) => NumberLiteral::Hex(n),
+            Token::ScientificNum(base, exp, neg_sign) => NumberLiteral::Scientific(base, exp, neg_sign),
         };
 
         let quantity = number

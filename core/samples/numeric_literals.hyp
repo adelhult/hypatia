@@ -1,0 +1,12 @@
+integer        = 10
+decimal        = 10.0
+binary         = 0b1010
+hex            = 0xA
+hexAlt         = 0xa
+scientific     = 1e1
+scientificAlt  = 100.0e-1
+scientificAlt2 = .3E3
+
+integer + decimal + binary + hex + hexAlt + scientific + scientificAlt
+// Result:
+70

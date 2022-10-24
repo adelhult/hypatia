@@ -34,7 +34,15 @@ pub enum BinOp {
 pub enum Literal {
     Nothing,
     Bool(bool),
-    Quantity(String, Option<String>),
+    Quantity(NumberLiteral, Option<String>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum NumberLiteral {
+    Binary(String),
+    Decimal(String),
+    Hex(String),
+    Scientific(String, String, bool),
 }
 
 pub type Span = std::ops::Range<usize>;

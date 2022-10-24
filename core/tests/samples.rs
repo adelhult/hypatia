@@ -87,3 +87,8 @@ fn unicode_ident() {
 fn decimal() {
     run_test_file(Path::new("./samples/decimal.hyp"));
 }
+
+#[test]
+fn numeric_literals() {
+    run_test_file(Path::new("./samples/numeric_literals.hyp"));
+}
