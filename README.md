@@ -35,9 +35,10 @@ foo = if true {
    30
 }
 
-// Hex and binary literals (todo) 
+// Hex, scientific and binary literals
 data = 0x20 bytes
 header = 0b1010 bit
+bigNumber = 3.2E20
 
 // Functions (todo)
 f(x) = x + 10
