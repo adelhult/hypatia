@@ -38018,10 +38018,6 @@ function getImports() {
   imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
     takeObject(arg0);
   };
-  imports.wbg.__wbindgen_object_clone_ref = function(arg0) {
-    const ret = getObject(arg0);
-    return addHeapObject(ret);
-  };
   imports.wbg.__wbg_now_c2563c77371d3ec4 = function(arg0) {
     const ret = getObject(arg0).now();
     return ret;
@@ -38071,6 +38067,10 @@ function getImports() {
   imports.wbg.__wbindgen_is_undefined = function(arg0) {
     const ret = getObject(arg0) === void 0;
     return ret;
+  };
+  imports.wbg.__wbindgen_object_clone_ref = function(arg0) {
+    const ret = getObject(arg0);
+    return addHeapObject(ret);
   };
   imports.wbg.__wbindgen_throw = function(arg0, arg1) {
     throw new Error(getStringFromWasm0(arg0, arg1));
