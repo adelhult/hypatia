@@ -1,4 +1,6 @@
 use num::rational::Ratio;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::{
     expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp},
@@ -75,8 +77,46 @@ struct Entry<T> {
 }
 
 #[derive(Debug, Clone)]
+struct VariableScope {
+    table: HashMap<String, Value>,
+    outer: Option<Rc<RefCell<Self>>>,
+}
+
+impl VariableScope {
+    fn new() -> Self {
+        Self {
+            table: HashMap::new(),
+            outer: None,
+        }
+    }
+
+    fn get_var(&self, name: &str) -> Option<Value> {
+        self.table.get(name).cloned().or_else(|| {
+            self.outer
+                .as_ref()
+                .and_then(|outer| outer.borrow().get_var(name))
+        })
+    }
+
+    fn declare_var(&mut self, name: &str, value: Value) {
+        self.table.insert(name.to_string(), value);
+    }
+
+    fn update_var(&mut self, name: &str, value: Value) -> Result<(), Error> {
+        if self.table.contains_key(name) {
+            self.table.insert(name.to_string(), value);
+            Ok(())
+        } else if let Some(outer) = self.outer.as_ref() {
+            outer.borrow_mut().update_var(name, value)
+        } else {
+            Err(Error::UpdateNonExistentVar(name.to_string()))
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Environment {
-    variables: Vec<HashMap<String, Value>>,
+    variables: Rc<RefCell<VariableScope>>,
     units: HashMap<String, Entry<Unit>>,
     prefixes: StringTrie<Entry<Number>>,
 }
@@ -88,7 +128,7 @@ impl Environment {
 
     pub fn without_prelude() -> Self {
         Self {
-            variables: vec![HashMap::new()],
+            variables: Rc::new(RefCell::new(VariableScope::new())),
             units: HashMap::new(),
             prefixes: StringTrie::new(),
         }
@@ -112,14 +152,10 @@ impl Environment {
         }
 
         // Otherwise go through all of the scopes to find the the variable
-        for scope in self.variables.iter().rev() {
-            if let Some(value) = scope.get(name).cloned() {
-                return Ok(value);
-            }
-        }
-
-        // If we did not find it, the variable must be undeclare
-        Err(Error::UnknownName(name.to_string()))
+        self.variables
+            .borrow()
+            .get_var(name)
+            .ok_or_else(|| Error::UnknownName(name.to_string()))
     }
 
     fn update_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -128,14 +164,7 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
-        for scope in self.variables.iter_mut().rev() {
-            if !scope.contains_key(name) {
-                continue;
-            }
-            scope.insert(name.to_string(), value.clone());
-            return Ok(());
-        }
-        Err(Error::UpdateNonExistentVar(name.to_string()))
+        self.variables.borrow_mut().update_var(name, value.clone())
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -144,10 +173,7 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
-        self.variables
-            .last_mut()
-            .expect("No scope exists")
-            .insert(name.to_string(), value.clone());
+        self.variables.borrow_mut().declare_var(name, value.clone());
         Ok(())
     }
 
@@ -229,11 +255,21 @@ impl Environment {
     }
 
     fn push_scope(&mut self) {
-        self.variables.push(HashMap::new());
+        let outer_scope = Rc::clone(&self.variables);
+        let new_scope = VariableScope {
+            outer: Some(outer_scope),
+            table: HashMap::new(),
+        };
+
+        self.variables = Rc::new(RefCell::new(new_scope));
     }
 
     fn pop_scope(&mut self) {
-        self.variables.pop();
+        let outer_scope = match &self.variables.borrow().outer {
+            Some(outer_scope) => Rc::clone(outer_scope),
+            None => panic!("No outer scope"),
+        };
+        self.variables = outer_scope;
     }
 
     fn declare_prefix(
@@ -359,7 +395,9 @@ fn eval_literal(literal: &Literal, env: &mut Environment) -> Result<Value, Error
                     NumberLiteral::Binary(n) => Number::from_binary_str(n),
                     NumberLiteral::Decimal(n) => Number::from_decimal_str(n),
                     NumberLiteral::Hex(n) => Number::from_hex_str(n),
-                    NumberLiteral::Scientific(base, exp, neg_sign) => Number::from_scientific_str(base, exp, *neg_sign),
+                    NumberLiteral::Scientific(base, exp, neg_sign) => {
+                        Number::from_scientific_str(base, exp, *neg_sign)
+                    }
                 },
                 unit,
             })
