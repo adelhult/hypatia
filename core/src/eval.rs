@@ -1,6 +1,5 @@
 use num::rational::Ratio;
-use std::cell::RefCell;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::{
     expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp},
@@ -79,7 +78,9 @@ struct Entry<T> {
 #[derive(Debug, Clone)]
 struct VariableScope {
     table: HashMap<String, Value>,
-    outer: Option<Arc<RefCell<Self>>>,
+    // Note: Will need to be thread safe since the Environment
+    // is stored in a global variable in implementation the front-end
+    outer: Option<Arc<Mutex<Self>>>,
 }
 
 impl VariableScope {
@@ -94,7 +95,7 @@ impl VariableScope {
         self.table.get(name).cloned().or_else(|| {
             self.outer
                 .as_ref()
-                .and_then(|outer| outer.borrow().get_var(name))
+                .and_then(|outer| outer.lock().unwrap().get_var(name))
         })
     }
 
@@ -107,7 +108,7 @@ impl VariableScope {
             self.table.insert(name.to_string(), value);
             Ok(())
         } else if let Some(outer) = self.outer.as_ref() {
-            outer.borrow_mut().update_var(name, value)
+            outer.lock().unwrap().update_var(name, value)
         } else {
             Err(Error::UpdateNonExistentVar(name.to_string()))
         }
@@ -116,7 +117,7 @@ impl VariableScope {
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    variables: Arc<RefCell<VariableScope>>,
+    variables: Arc<Mutex<VariableScope>>,
     units: HashMap<String, Entry<Unit>>,
     prefixes: StringTrie<Entry<Number>>,
 }
@@ -128,7 +129,7 @@ impl Environment {
 
     pub fn without_prelude() -> Self {
         Self {
-            variables: Arc::new(RefCell::new(VariableScope::new())),
+            variables: Arc::new(Mutex::new(VariableScope::new())),
             units: HashMap::new(),
             prefixes: StringTrie::new(),
         }
@@ -153,7 +154,8 @@ impl Environment {
 
         // Otherwise go through all of the scopes to find the the variable
         self.variables
-            .borrow()
+            .lock()
+            .unwrap()
             .get_var(name)
             .ok_or_else(|| Error::UnknownName(name.to_string()))
     }
@@ -164,7 +166,10 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
-        self.variables.borrow_mut().update_var(name, value.clone())
+        self.variables
+            .lock()
+            .unwrap()
+            .update_var(name, value.clone())
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -173,7 +178,10 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
-        self.variables.borrow_mut().declare_var(name, value.clone());
+        self.variables
+            .lock()
+            .unwrap()
+            .declare_var(name, value.clone());
         Ok(())
     }
 
@@ -261,11 +269,11 @@ impl Environment {
             table: HashMap::new(),
         };
 
-        self.variables = Arc::new(RefCell::new(new_scope));
+        self.variables = Arc::new(Mutex::new(new_scope));
     }
 
     fn pop_scope(&mut self) {
-        let outer_scope = match &self.variables.borrow().outer {
+        let outer_scope = match &self.variables.lock().unwrap().outer {
             Some(outer_scope) => Arc::clone(outer_scope),
             None => panic!("No outer scope"),
         };
