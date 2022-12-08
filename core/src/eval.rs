@@ -1,6 +1,6 @@
 use num::rational::Ratio;
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp},
@@ -79,7 +79,7 @@ struct Entry<T> {
 #[derive(Debug, Clone)]
 struct VariableScope {
     table: HashMap<String, Value>,
-    outer: Option<Rc<RefCell<Self>>>,
+    outer: Option<Arc<RefCell<Self>>>,
 }
 
 impl VariableScope {
@@ -116,7 +116,7 @@ impl VariableScope {
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    variables: Rc<RefCell<VariableScope>>,
+    variables: Arc<RefCell<VariableScope>>,
     units: HashMap<String, Entry<Unit>>,
     prefixes: StringTrie<Entry<Number>>,
 }
@@ -128,7 +128,7 @@ impl Environment {
 
     pub fn without_prelude() -> Self {
         Self {
-            variables: Rc::new(RefCell::new(VariableScope::new())),
+            variables: Arc::new(RefCell::new(VariableScope::new())),
             units: HashMap::new(),
             prefixes: StringTrie::new(),
         }
@@ -255,18 +255,18 @@ impl Environment {
     }
 
     fn push_scope(&mut self) {
-        let outer_scope = Rc::clone(&self.variables);
+        let outer_scope = Arc::clone(&self.variables);
         let new_scope = VariableScope {
             outer: Some(outer_scope),
             table: HashMap::new(),
         };
 
-        self.variables = Rc::new(RefCell::new(new_scope));
+        self.variables = Arc::new(RefCell::new(new_scope));
     }
 
     fn pop_scope(&mut self) {
         let outer_scope = match &self.variables.borrow().outer {
-            Some(outer_scope) => Rc::clone(outer_scope),
+            Some(outer_scope) => Arc::clone(outer_scope),
             None => panic!("No outer scope"),
         };
         self.variables = outer_scope;
