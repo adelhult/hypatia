@@ -24,6 +24,7 @@ fn exact(value: &Value) -> Option<Format> {
         }
         Value::Nothing => Some(format!("Nothing")),
         Value::Bool(b) => Some(format!("{b}")),
+        Value::Function(_) => Some(format!("Function")),
     };
 
     html.map(|html| Format {
