@@ -262,6 +262,33 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             .separated_by(just(Token::Comma))
             .allow_trailing();
 
+        let parameter_list = ident
+            .clone()
+            .separated_by(just(Token::Comma))
+            .allow_trailing();
+
+        // General named function assignment syntax
+        // f(x) = 10 + x
+        let function = ident
+            .then(
+                parameter_list
+                    .clone()
+                    .delimited_by(just(Token::LParen), just(Token::RParen)),
+            )
+            .then_ignore(just(Token::Assignment))
+            .then(expr.clone());
+
+        // Declare a new function
+        let function_decl = function
+            .clone()
+            .map(|((name, params), body)| Expr::FunctionDecl(name, params, Box::new(body)));
+
+        // A name can also be reassigned to a function
+        // update f(x) = 10 + x
+        let function_update = just(Token::Update)
+            .ignore_then(function)
+            .map(|((name, params), body)| Expr::FunctionUpdate(name, params, Box::new(body)));
+
         // General variable assignment syntax
         // x = 20
         let assignment = ident
@@ -307,6 +334,8 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             });
 
         let atom = value
+            .or(function_update)
+            .or(function_decl)
             .or(var_update)
             .or(var_declaration)
             .or(derived_unit_decl)

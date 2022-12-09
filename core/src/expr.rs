@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Error,
     Literal(Literal),
@@ -10,6 +10,8 @@ pub enum Expr {
     Block(Vec<Spanned<Self>>),
     Program(Vec<Spanned<Self>>),
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
+    FunctionDecl(String, Vec<String>, Box<Spanned<Self>>),
+    FunctionUpdate(String, Vec<String>, Box<Spanned<Self>>),
     BaseUnitDecl(String, Option<String>),
     DerivedUnitDecl(String, Option<String>, Box<Spanned<Self>>),
     PrefixDecl(String, Option<String>, Box<Spanned<Self>>),

@@ -1,0 +1,5 @@
+f(x) = 10 meter + x
+
+f(5 meter)
+// Result:
+15 m

@@ -1,0 +1,8 @@
+foo = nothing
+{
+    update foo(x) = x + 10
+}
+foo(15)
+
+// Result:
+25

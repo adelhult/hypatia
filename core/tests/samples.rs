@@ -92,3 +92,13 @@ fn decimal() {
 fn numeric_literals() {
     run_test_file(Path::new("./samples/numeric_literals.hyp"));
 }
+
+#[test]
+fn function() {
+    run_test_file(Path::new("./samples/function.hyp"));
+}
+
+#[test]
+fn update_function() {
+    run_test_file(Path::new("./samples/update_function.hyp"));
+}

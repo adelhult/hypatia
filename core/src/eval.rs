@@ -12,11 +12,12 @@ use crate::{
 use std::collections::HashMap;
 use std::fmt;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Value {
     Nothing,
     Bool(bool),
     Quantity(Quantity),
+    Function(Function),
 }
 
 impl Value {
@@ -25,6 +26,7 @@ impl Value {
             Value::Nothing => Ok(false),
             Value::Bool(b) => Ok(*b),
             Value::Quantity(_) => Err(Error::InvalidType),
+            Value::Function(_) => Err(Error::InvalidType),
         }
     }
 
@@ -63,8 +65,17 @@ impl fmt::Display for Value {
                 //  showing the result in the most suitable unit
                 write!(f, "{}", q.clone().normalize())
             }
+            Value::Function(_) => write!(f, "Function"),
         }
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct Function {
+    body: Spanned<Expr>,
+    parameters: Vec<String>,
+    env: Environment, // FIXME: I need to make the Environment a lot cheaper to clone, should just be a smart pointer.
+                      // That means that I need to move the units and prefixes into Arc<Mutex<..>>
 }
 
 /// Used to keep track of additional information related to a Unit/Prefix
@@ -323,7 +334,51 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             env.update_var(name, &value)?;
             Ok(value)
         }
-        Expr::Call(_, _) => todo!(),
+        Expr::Call(callable, arguments) => {
+            let Value::Function(mut function) = eval(callable, env)? else {
+               return Err(Error::InvalidType);
+            };
+
+            if function.parameters.len() != arguments.len() {
+                return Err(Error::InvalidType);
+            }
+
+            // Create a new scope and add all the arguments
+            function.env.push_scope();
+            // Evaluate  the arguments (note: use the env at the call site)
+            let values: Vec<Result<_, _>> = arguments.iter().map(|arg| eval(arg, env)).collect();
+
+            for (name, value) in function.parameters.iter().zip(values.into_iter()) {
+                env.declare_var(name, &value?)?;
+            }
+
+            // Finally, evaluate the function body
+            // (note: important to use the environment from the actual closure here)
+            eval(&function.body, &mut function.env)
+        }
+
+        Expr::FunctionDecl(name, parameters, body) => {
+            let function = Value::Function(Function {
+                parameters: parameters.clone(),
+                body: *body.clone(),
+                env: env.clone(),
+            });
+
+            env.declare_var(name, &function)?;
+
+            Ok(function)
+        }
+        Expr::FunctionUpdate(name, parameters, body) => {
+            let function = Value::Function(Function {
+                parameters: parameters.clone(),
+                body: *body.clone(),
+                env: env.clone(),
+            });
+
+            env.update_var(name, &function)?;
+
+            Ok(function)
+        }
         Expr::If(cond, a, b) => {
             let cond = eval(cond, env)?;
             if cond.is_true()? {
