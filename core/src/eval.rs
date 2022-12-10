@@ -129,8 +129,8 @@ impl VariableScope {
 #[derive(Debug, Clone)]
 pub struct Environment {
     variables: Arc<Mutex<VariableScope>>,
-    units: HashMap<String, Entry<Unit>>,
-    prefixes: StringTrie<Entry<Number>>,
+    units: Arc<Mutex<HashMap<String, Entry<Unit>>>>,
+    prefixes: Arc<Mutex<StringTrie<Entry<Number>>>>,
 }
 
 impl Environment {
@@ -141,8 +141,8 @@ impl Environment {
     pub fn without_prelude() -> Self {
         Self {
             variables: Arc::new(Mutex::new(VariableScope::new())),
-            units: HashMap::new(),
-            prefixes: StringTrie::new(),
+            units: Arc::new(Mutex::new(HashMap::new())),
+            prefixes: Arc::new(Mutex::new(StringTrie::new())),
         }
     }
 
@@ -219,8 +219,9 @@ impl Environment {
             derived_unit = Unit(Number::one(), [(base_unit, Ratio::new(1, 1))].into());
         }
 
+        let mut units = self.units.lock().unwrap();
         // add the unit
-        self.units.insert(
+        units.insert(
             long_name.to_string(),
             Entry {
                 is_long_name: true,
@@ -230,7 +231,7 @@ impl Environment {
 
         // Do the same if there is a short name
         if let Some(name) = short_name {
-            self.units.insert(
+            units.insert(
                 name.clone(),
                 Entry {
                     is_long_name: false,
@@ -244,21 +245,22 @@ impl Environment {
 
     /// Resolve the name of unit
     fn get_unit(&self, name: &str) -> Result<Unit, Error> {
+        let units = self.units.lock().unwrap();
+        let prefixes = self.prefixes.lock().unwrap();
+
         // If there is a unit with this exact name, return that
-        if let Some(unit) = self.units.get(name) {
+        if let Some(unit) = units.get(name) {
             return Ok(unit.value.clone());
         }
 
         // Otherwise we will check if the unit is prefixed
-        for (prefix_name, prefix) in self.prefixes.search(name) {
+
+        for (prefix_name, prefix) in prefixes.search(name) {
             if let Some(unit_name) = name.strip_prefix(&prefix_name) {
-                let unit = self.units.get(unit_name);
 
-                if unit.is_none() {
+                let Some(unit) = units.get(unit_name) else {
                     continue;
-                }
-
-                let unit = unit.unwrap();
+                };
 
                 // We want both the unit and prefix to be long or a short nane
                 // things like "kmeter" is not accepted
@@ -297,10 +299,12 @@ impl Environment {
         value: Number,
         is_long_name: bool,
     ) -> Result<(), Error> {
-        if self.prefixes.contains_key(name) {
+        let mut prefixes = self.prefixes.lock().unwrap();
+
+        if prefixes.contains_key(name) {
             Err(Error::OccupiedName(name.to_string()))
         } else {
-            self.prefixes.insert(
+            prefixes.insert(
                 name,
                 Entry {
                     is_long_name,
