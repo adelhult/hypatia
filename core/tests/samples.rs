@@ -102,3 +102,8 @@ fn function() {
 fn update_function() {
     run_test_file(Path::new("./samples/update_function.hyp"));
 }
+
+#[test]
+fn nested_functions() {
+    run_test_file(Path::new("./samples/nested_functions.hyp"));
+}

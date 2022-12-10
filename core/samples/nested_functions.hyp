@@ -1,0 +1,16 @@
+// An example for Bob Nystroms book "Crafting Interpreters"
+// https://craftinginterpreters.com/functions.html
+makeCounter() = {
+    i = 0
+    count() = {
+        update i = i + 1
+    }
+}
+
+counter = makeCounter()
+counter() // 1
+counter() // 2
+counter()
+
+// Result:
+3
