@@ -55,6 +55,7 @@ pub fn clear_state() {
 
 #[wasm_bindgen]
 pub fn write_cell(cell_index: usize, code: &str) -> Vec<usize> {
+    utils::set_panic_hook();
     let mut cells = STATE.lock().unwrap();
 
     // Get the environment produced by the previous cell or use a empty env if this is the first one
@@ -116,7 +117,18 @@ pub fn remove_cell(cell_index: usize) {
 }
 
 #[wasm_bindgen]
-pub fn read_cell(cell_index: usize) -> String {
+pub fn read_cell_code(cell_index: usize) -> String {
+    STATE
+        .lock()
+        .unwrap()
+        .get(cell_index)
+        .expect("Invalid cell index")
+        .source_code
+        .clone()
+}
+
+#[wasm_bindgen]
+pub fn read_cell_output(cell_index: usize) -> String {
     let cells = STATE.lock().unwrap();
     let cell = cells.get(cell_index).expect("Invalid cell index");
 
