@@ -37644,7 +37644,7 @@ const Formats = styled.div`
 const FormatButton = styled.button`
     border: solid;
     border-width: 1px;
-    border-color: ##d9d9d9;
+    border-color: #d9d9d9;
     background: white;
     color: inherit;
     font-size: 0.8rem;
@@ -37707,10 +37707,10 @@ const Cell = React.memo((props) => {
       y: 0,
       opacity: 1
     },
-    children: [/* @__PURE__ */ jsxs(Remove$1, {
+    children: [/* @__PURE__ */ jsx(Remove$1, {
       title: "Remove cell",
       onClick: () => props.onRemove(props.index),
-      children: [/* @__PURE__ */ jsx(MdClose, {}), " "]
+      children: /* @__PURE__ */ jsx(MdClose, {})
     }), /* @__PURE__ */ jsx(ReactCodeMirror, {
       onChange: (code) => props.onChange(props.index, code),
       value: props.code,
@@ -37731,7 +37731,7 @@ const Cell = React.memo((props) => {
           children: format
         }, format))
       }), /* @__PURE__ */ jsxs(AnswerText, {
-        children: ["answer(", props.index, ") = "]
+        children: ["answer(", props.index, ") ="]
       }), /* @__PURE__ */ jsx(Time, {
         children: (_b = props.time) != null ? _b : ""
       }), /* @__PURE__ */ jsx("pre", {
@@ -37950,10 +37950,22 @@ function insert_cell(cell_index) {
 function remove_cell(cell_index) {
   wasm.remove_cell(cell_index);
 }
-function read_cell(cell_index) {
+function read_cell_code(cell_index) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-    wasm.read_cell(retptr, cell_index);
+    wasm.read_cell_code(retptr, cell_index);
+    var r0 = getInt32Memory0()[retptr / 4 + 0];
+    var r1 = getInt32Memory0()[retptr / 4 + 1];
+    return getStringFromWasm0(r0, r1);
+  } finally {
+    wasm.__wbindgen_add_to_stack_pointer(16);
+    wasm.__wbindgen_free(r0, r1);
+  }
+}
+function read_cell_output(cell_index) {
+  try {
+    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+    wasm.read_cell_output(retptr, cell_index);
     var r0 = getInt32Memory0()[retptr / 4 + 0];
     var r1 = getInt32Memory0()[retptr / 4 + 1];
     return getStringFromWasm0(r0, r1);
@@ -38072,6 +38084,24 @@ function getImports() {
     const ret = getObject(arg0);
     return addHeapObject(ret);
   };
+  imports.wbg.__wbg_new_693216e109162396 = function() {
+    const ret = new Error();
+    return addHeapObject(ret);
+  };
+  imports.wbg.__wbg_stack_0ddaca5d1abfb52f = function(arg0, arg1) {
+    const ret = getObject(arg1).stack;
+    const ptr0 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    getInt32Memory0()[arg0 / 4 + 1] = len0;
+    getInt32Memory0()[arg0 / 4 + 0] = ptr0;
+  };
+  imports.wbg.__wbg_error_09919627ac0992f5 = function(arg0, arg1) {
+    try {
+      console.error(getStringFromWasm0(arg0, arg1));
+    } finally {
+      wasm.__wbindgen_free(arg0, arg1);
+    }
+  };
   imports.wbg.__wbindgen_throw = function(arg0, arg1) {
     throw new Error(getStringFromWasm0(arg0, arg1));
   };
@@ -38096,11 +38126,110 @@ async function init(input) {
   const { instance, module } = await load(await input, imports);
   return finalizeInit(instance, module);
 }
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "write": {
+      let cells = [...state.cells];
+      cells[action.writtenCell].code = read_cell_code(action.writtenCell);
+      action.updatedCells.forEach((index2) => {
+        cells[index2].output = read_cell_output(index2);
+        cells[index2].time = read_cell_time(index2);
+      });
+      return {
+        ...state,
+        cells
+      };
+    }
+    case "loaded wasm": {
+      return {
+        ...state,
+        cells: [{
+          code: "",
+          output: ""
+        }],
+        loaded: true
+      };
+    }
+    case "add cell": {
+      let cells = [...state.cells];
+      cells.push({
+        code: "",
+        output: ""
+      });
+      return {
+        ...state,
+        cells
+      };
+    }
+    case "remove cell": {
+      return {
+        ...state,
+        cells: state.cells.filter((_c, i) => i !== action.index)
+      };
+    }
+    case "restore session": {
+      if (state.previousSession === null)
+        return state;
+      return {
+        ...state,
+        sessionRestored: true,
+        cells: state.previousSession.map((code, i) => ({
+          code: read_cell_code(i),
+          output: read_cell_output(i),
+          time: read_cell_time(i)
+        }))
+      };
+    }
+  }
+};
+function writeCell(index2, code, dispatch) {
+  const updatedCells = write_cell(index2, code);
+  dispatch({
+    type: "write",
+    updatedCells,
+    writtenCell: index2
+  });
+}
+function addCell(state, dispatch) {
+  insert_cell(state.cells.length);
+  dispatch({
+    type: "add cell"
+  });
+}
+function removeCell(index2, dispatch) {
+  remove_cell(index2);
+  dispatch({
+    type: "remove cell",
+    index: index2
+  });
+}
+function recoverSession(state, dispatch) {
+  clear_state();
+  if (state.previousSession === null)
+    return;
+  state.previousSession.forEach((code, index2) => {
+    insert_cell(index2);
+    write_cell(index2, code);
+  });
+  dispatch({
+    type: "restore session"
+  });
+}
+function useWasm(dispatch) {
+  react.exports.useEffect(() => {
+    init().then(() => {
+      insert_cell(0);
+      dispatch({
+        type: "loaded wasm"
+      });
+    });
+  }, []);
+}
 const Workspace = styled.div`
   width: 100%;
   max-width: 700px;
-  margin-left:auto;
-  margin-right:auto;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
   padding: 1rem;
 `;
@@ -38116,108 +38245,72 @@ const Action = styled.button`
   justify-content: space-between;
   box-sizing: border-box;
   padding: 0.5rem;
-  width:100%;
+  width: 100%;
   margin-top: 0.5rem;
   margin-right: 0.5rem;
   border: none;
   border-radius: 0.2rem;
 `;
 function App() {
-  const [loaded, setLoaded] = react.exports.useState(false);
-  const [prevSession, setPreviousSession] = react.exports.useState([]);
-  const [cells, setCells] = react.exports.useState([{
-    code: "",
-    output: ""
-  }]);
-  react.exports.useEffect(() => {
-    init().then(() => {
-      setLoaded(true);
-      insert_cell(0);
-    });
-  }, []);
-  react.exports.useEffect(() => {
+  var _a2, _b;
+  const [state, dispatch] = react.exports.useReducer(reducer, {
+    cells: [],
+    previousSession: null,
+    loaded: false,
+    sessionRestored: false
+  }, (state2) => {
     let parsedData = localStorage.getItem("cells");
     if (!parsedData) {
-      return;
+      return {
+        ...state2,
+        previousSession: []
+      };
     }
-    const prevCells = JSON.parse(parsedData);
-    if (prevCells.length === 0) {
-      return;
+    const previousSession = JSON.parse(parsedData);
+    if (previousSession.length === 0) {
+      return {
+        ...state2,
+        previousSession: []
+      };
     }
-    if (prevCells.every((code) => code.length === 0)) {
-      return;
+    if (previousSession.every((code) => code.length === 0)) {
+      return {
+        ...state2,
+        previousSession: []
+      };
     }
-    setPreviousSession(prevCells);
-  }, []);
+    return {
+      ...state2,
+      previousSession
+    };
+  });
+  useWasm(dispatch);
   react.exports.useEffect(() => {
-    localStorage.setItem("cells", JSON.stringify(cells.map((cell) => cell.code)));
-  }, [cells]);
-  const onChange = (changed_cell_index, code) => {
-    if (!loaded)
+    if (state.previousSession === null)
       return;
-    const updatedCells = write_cell(changed_cell_index, code);
-    setCells((oldCells) => {
-      let cells2 = [...oldCells];
-      cells2[changed_cell_index].code = code;
-      updatedCells.forEach((index2) => {
-        cells2[index2].output = read_cell(index2);
-        cells2[index2].time = read_cell_time(index2);
-      });
-      return cells2;
-    });
-  };
-  const addCell = () => {
-    insert_cell(cells.length);
-    setCells((oldCells) => {
-      let cells2 = [...oldCells];
-      cells2.push({
-        code: "",
-        output: ""
-      });
-      return cells2;
-    });
-  };
-  const removeCell = (index2) => {
-    remove_cell(index2);
-    setCells((oldCells) => {
-      let cells2 = [...oldCells];
-      cells2.splice(index2, 1);
-      return cells2;
-    });
-  };
-  const restoreSession = () => {
-    clear_state();
-    prevSession.forEach((code, index2) => {
-      insert_cell(index2);
-      write_cell(index2, code);
-    });
-    setCells(prevSession.map((code) => ({
-      code,
-      output: ""
-    })));
-    setPreviousSession([]);
-  };
+    localStorage.setItem("cells", JSON.stringify(state.cells.map((cell) => cell.code)));
+  }, [state.cells, state.previousSession]);
   return /* @__PURE__ */ jsxs("div", {
     className: "App",
-    children: [/* @__PURE__ */ jsx(Menu, {}), loaded && /* @__PURE__ */ jsxs(Workspace, {
+    children: [/* @__PURE__ */ jsx(Menu, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
       children: [/* @__PURE__ */ jsx(Prompt, {
         title: "Welcome back!",
-        show: prevSession.length > 0,
+        show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
         action: "Restore session",
-        handleAction: restoreSession,
+        handleAction: () => recoverSession(state, dispatch),
         children: "You have a previous session saved since last time."
-      }), cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
+      }), state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
         noAnimation: index2 == 0,
         code: cell.code,
         output: cell.output,
         time: cell.time,
-        onChange,
-        onRemove: removeCell,
-        addCellAction: addCell,
+        onChange: (i, code) => writeCell(i, code, dispatch),
+        onRemove: (i) => removeCell(i, dispatch),
+        addCellAction: () => addCell(state, dispatch),
         index: index2
       }, index2)), /* @__PURE__ */ jsx(Actions, {
         children: /* @__PURE__ */ jsxs(Action, {
-          onClick: addCell,
+          onClick: () => addCell(state, dispatch),
           children: ["New Cell ", /* @__PURE__ */ jsx(MdAddCircleOutline, {
             size: "1.2rem"
           })]
