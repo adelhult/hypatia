@@ -4,8 +4,9 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Box = styled(motion.div)`
-    position: relative;
+    position: absolute;
     width: 100%;
+    top: 0;
     display: flex;
     gap: 2rem;
     align-items: flex-start;

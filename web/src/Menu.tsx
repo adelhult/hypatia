@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 const Container = styled.div`
     display: flex;
     width: 100%;
@@ -6,8 +6,8 @@ const Container = styled.div`
     padding: 1rem;
     justify-content: center;
     align-items: center;
-    margin-bottom: 1rem;
-`
+    margin-top: 4rem;
+`;
 
 const LogoContainer = styled.div`
   display: flex;
@@ -17,18 +17,23 @@ const LogoContainer = styled.div`
 const Logo = styled.img`
     max-width: 8rem;
     margin-right: 0.5rem;
-`
+`;
 
 const LogoText = styled.h1`
     font-size: 1.6rem;
     font-weight: normal;
-`
+`;
 
 export default function Menu() {
-    return <Container className="Menu">
-        <LogoContainer>
-            <Logo src="logo.png"></Logo>
-            <LogoText><strong>Hypatia</strong><br/>Calculator</LogoText>
-        </LogoContainer>
+  return (
+    <Container className="Menu">
+      <LogoContainer>
+        <Logo src="logo.png"></Logo>
+        <LogoText>
+          <strong>Hypatia</strong>
+          <br />Calculator
+        </LogoText>
+      </LogoContainer>
     </Container>
+  );
 }
