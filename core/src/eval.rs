@@ -9,7 +9,7 @@ use crate::{
     units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
 #[derive(Clone, Debug)]
@@ -130,6 +130,8 @@ impl VariableScope {
 pub struct Environment {
     variables: Arc<Mutex<VariableScope>>,
     units: Arc<Mutex<HashMap<String, Entry<Unit>>>>,
+    unit_names:
+        Arc<Mutex<HashMap<BTreeMap<BaseUnit, Ratio<i32>>, HashSet<(String, Option<String>)>>>>,
     prefixes: Arc<Mutex<StringTrie<Entry<Number>>>>,
 }
 
@@ -142,6 +144,7 @@ impl Environment {
         Self {
             variables: Arc::new(Mutex::new(VariableScope::new())),
             units: Arc::new(Mutex::new(HashMap::new())),
+            unit_names: Arc::new(Mutex::new(HashMap::new())),
             prefixes: Arc::new(Mutex::new(StringTrie::new())),
         }
     }
@@ -235,9 +238,20 @@ impl Environment {
                 name.clone(),
                 Entry {
                     is_long_name: false,
-                    value: derived_unit,
+                    value: derived_unit.clone(),
                 },
             );
+        }
+
+        // Also, create a entry with the unit dimension that maps to the name so we can make
+        // cheap lookups later when we want to display a nice name of a unit.
+        // For example, [kg^1, m^1, s^-2] -> ("Newton", "N").
+        let mut unit_names = self.unit_names.lock().unwrap();
+        let entry = (long_name.to_string(), short_name.clone());
+        if let Some(names) = unit_names.get_mut(&derived_unit.1) {
+            names.insert(entry);
+        } else {
+            unit_names.insert(derived_unit.1, [entry].into());
         }
 
         Ok(())
@@ -257,7 +271,6 @@ impl Environment {
 
         for (prefix_name, prefix) in prefixes.search(name) {
             if let Some(unit_name) = name.strip_prefix(&prefix_name) {
-
                 let Some(unit) = units.get(unit_name) else {
                     continue;
                 };

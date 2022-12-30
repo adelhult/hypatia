@@ -215,7 +215,7 @@ impl fmt::Display for Unit {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Hash, Ord, Clone, Debug)]
 pub struct BaseUnit(pub String, pub Option<String>);
 
 impl fmt::Display for BaseUnit {
