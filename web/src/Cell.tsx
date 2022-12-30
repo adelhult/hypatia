@@ -9,11 +9,9 @@ import Convert from "ansi-to-html";
 import { motion } from "framer-motion";
 
 const Result = styled.div`
-    padding:0.5rem;
     box-sizing: border-box;
-    background-color: #ededed;
     font-family: 'JetBrains Mono', monospace;
-    margin-top: 0;
+    margin-top: 0.2rem;
 `;
 
 const ResultData = styled.div`
@@ -39,11 +37,7 @@ const Time = styled.span`
 
 const Wrapper = styled(motion.div)`
     position: relative;
-    border: solid;
-    border-width: 1px;
-    border-color: #d0d0d7;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
+    margin-bottom: 1.5rem;
 `;
 
 const Remove = styled.button`
@@ -80,6 +74,10 @@ const FormatButton = styled.button`
     padding: 0.2rem;
     border-radius: 0.2rem;
     transition: all 0.3s;
+`;
+
+const Editor = styled.div`
+  border: solid 2px #D6D6D6;
 `;
 
 const hotkeys = (addCellAction: () => void) =>
@@ -149,24 +147,29 @@ const Cell = React.memo((props: CellProps) => {
       <Remove title="Remove cell" onClick={() => props.onRemove(props.index)}>
         <MdClose />
       </Remove>
-      <CodeMirror
-        onChange={(code) => props.onChange(props.index, code)}
-        value={props.code}
-        theme={theme}
-        autoFocus
-        placeholder={props.index == 0 ? "try '10 m + 2 m'" : undefined}
-        extensions={[hotkeys(props.addCellAction)]}
-        basicSetup={{
-          lineNumbers: props.code.match("\n") != null,
-        }}
-      />
+      <Editor>
+        <CodeMirror
+          onChange={(code) => props.onChange(props.index, code)}
+          value={props.code}
+          theme={theme}
+          autoFocus
+          placeholder={props.index == 0 ? "try '10 m + 2 m'" : undefined}
+          extensions={[hotkeys(props.addCellAction)]}
+          basicSetup={{
+            lineNumbers: props.code.match("\n") != null,
+          }}
+        />
+      </Editor>
+
       {props.code && (
         <Result>
           <Formats>
             {output.map(([value, format]) =>
               format && (
                 <FormatButton
-                  style={{ opacity: format === outputFormat ? 1 : 0.3 }}
+                  style={{
+                    opacity: format === outputFormat ? 1 : 0.3,
+                  }}
                   key={format}
                   onClick={() => setCurrentFormat(format)}
                 >

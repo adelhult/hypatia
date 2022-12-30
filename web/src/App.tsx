@@ -42,6 +42,8 @@ const Action = styled.button`
   margin-right: 0.5rem;
   border: none;
   border-radius: 0.2rem;
+  background: #F0C808;
+  border: solid 2px black;
 `;
 
 function App() {
@@ -83,18 +85,18 @@ function App() {
 
   return (
     <div className="App">
+      <Prompt
+        title="Welcome back!"
+        show={!state.sessionRestored &&
+          (state.previousSession?.length ?? 0) > 0}
+        action="Restore session"
+        handleAction={() => recoverSession(state, dispatch)}
+      >
+        You have a previous session saved since last time.
+      </Prompt>
       <Menu />
       {state.loaded && (
         <Workspace>
-          <Prompt
-            title="Welcome back!"
-            show={!state.sessionRestored &&
-              (state.previousSession?.length ?? 0) > 0}
-            action="Restore session"
-            handleAction={() => recoverSession(state, dispatch)}
-          >
-            You have a previous session saved since last time.
-          </Prompt>
           {state.cells.map((cell, index) => (
             <Cell
               key={index}

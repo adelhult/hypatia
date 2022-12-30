@@ -1,27 +1,30 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 import { MdClose } from "react-icons/md";
 import { useState } from "react";
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
 
 const Box = styled(motion.div)`
     position: relative;
+    width: 100%;
     display: flex;
-    flex-direction: column;
-    border-radius: 0.2rem;
+    gap: 2rem;
     align-items: flex-start;
-    background: #6B8F71;
+    justify-content: center;
+    background: #4C956C;
     color: white;
     padding: 1rem;
     box-sizing: border-box;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
+
+    @media (max-width: 800px) {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 `;
 
 const Remove = styled.button`
     z-index: 1000;
     position: absolute;
-    right: 3px;
-    top: 6px;
+    right: 1rem;
     font-size: 1rem;
     background: none;
     border: none;
@@ -43,7 +46,6 @@ const Action = styled.button`
     font-family: inherit;
     padding:0;
     font-size: 1rem;
-    margin-top: 0.7rem;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -52,42 +54,41 @@ const Action = styled.button`
     }
 `;
 
-const Title = styled.span`
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 0.2rem;
-`
-
 interface PromptProps {
-    children: React.ReactNode;
-    action: string;
-    title?: string;
-    show: boolean;
-    handleAction: () => void;
+  children: React.ReactNode;
+  action: string;
+  title?: string;
+  show: boolean;
+  handleAction: () => void;
 }
 
 export default function Prompt(props: PromptProps) {
-    const [show, setShow] = useState(true);
+  const [show, setShow] = useState(true);
 
-    return <AnimatePresence>
-        {show && props.show && <Box
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{x: 50, opacity: 0}}
-            className="Prompt"
+  return (
+    <AnimatePresence>
+      {show && props.show && (
+        <Box
+          initial={{ translateY: "-150%" }}
+          animate={{ translateY: "0%" }}
+          exit={{ translateY: "-150%" }}
+          transition={{ easings: ["easeIn", "easeOut"] }}
+          className="Prompt"
         >
-            <Remove
-                title="Close prompt"
-                onClick={() => setShow(false)}
-            >
-                <MdClose style={{color:"white"}}/>
-            </Remove>
-            {props.title && <Title>{props.title}</Title>}
-            {props.children}
-            <Action onClick={props.handleAction}>
-                {props.action}
-            </Action>
+          <Remove
+            title="Close prompt"
+            onClick={() => setShow(false)}
+          >
+            <MdClose style={{ color: "white" }} />
+          </Remove>
+          <div>
+            {props.title && <strong>{props.title}</strong>} {props.children}
+          </div>
+          <Action onClick={props.handleAction}>
+            {props.action}
+          </Action>
         </Box>
-    }
+      )}
     </AnimatePresence>
+  );
 }
