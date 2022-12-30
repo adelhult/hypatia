@@ -1,11 +1,17 @@
 use console::style;
 use dialoguer::Input;
-use hypatia_lib::{eval, parse, report_error, Environment, Error};
+use hypatia_lib::{eval, format_unit, parse, report_error, units::Quantity, Environment, Error, Value};
 
 fn run(source: &str, env: &mut Environment) -> Result<String, Vec<Error>> {
     let ast = parse(source)?;
     let value = eval(&ast, env).map_err(|error| vec![error])?;
-    Ok(format!("{value}"))
+    Ok(match value {
+        Value::Quantity(quantity) => {
+            let (Quantity{number, unit: _}, (long_name, _)) = format_unit(quantity, env);
+            format!("{number} {long_name}")
+        }
+        other => format!("{other}"),
+    })
 }
 
 fn get_input() -> Option<String> {

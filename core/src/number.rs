@@ -66,8 +66,20 @@ impl Number {
         ))
     }
 
+    pub fn abs(self) -> Self {
+        if self < Number::zero() {
+            -self
+        } else {
+            self
+        }
+    }
+
     pub fn one() -> Self {
         Self::new(1)
+    }
+
+    pub fn zero() -> Self {
+        Self::new(0)
     }
 
     pub fn into_approx(self) -> Self {

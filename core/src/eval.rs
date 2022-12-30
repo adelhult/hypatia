@@ -243,7 +243,7 @@ impl Environment {
             );
         }
 
-        // Also, create a entry with the unit dimension that maps to the name so we can make
+        // Also, create a entry with the base unit set that maps to the name so we can make
         // cheap lookups later when we want to display a nice name of a unit.
         // For example, [kg^1, m^1, s^-2] -> ("Newton", "N").
         let mut unit_names = self.unit_names.lock().unwrap();
@@ -286,6 +286,17 @@ impl Environment {
         }
 
         Err(Error::UnknownName(name.to_string()))
+    }
+
+    fn get_unit_names(
+        &self,
+        base_units: &BTreeMap<BaseUnit, Ratio<i32>>,
+    ) -> HashSet<(String, Option<String>)> {
+        let unit_names = self.unit_names.lock().unwrap();
+        unit_names
+            .get(base_units)
+            .cloned()
+            .unwrap_or_else(|| HashSet::new())
     }
 
     fn push_scope(&mut self) {
@@ -447,6 +458,76 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             }
         }
     }
+}
+
+/// Given a Quantity get the best matching unit to display the quantity as.
+/// Returns a new quantity which might be rescaled if there is no perfect match and
+/// long and short name of the unit.
+pub fn format_unit(
+    quantity: Quantity,
+    env: &Environment,
+    ) -> (Quantity, (String, Option<String>)) {
+    let Quantity { number, unit } = &quantity;
+    let Unit(scale, base_units) = unit;
+
+    let matches = env.get_unit_names(&base_units);
+
+    // Compare the scale of this unit with the scale used in our Quantity, we pick
+    // the unit with the lowest difference in scale as our prefered unit.
+    // TODO: Rewrite this. This code ended up super imperative and kinda ugly. It was
+    // hard to use util methods like min_by_key on Number since it lacks the Ord trait.
+    let mut best_diff = None;
+    let mut best_match = None;
+
+    for (long_name, short_name) in matches {
+        let Ok(Unit(other_scale, _)) = env.get_unit(&long_name) else {
+            continue;
+        };
+
+        // Compare the scale of the unit found in our quantity with
+        // all possible matches
+        let diff = Number::abs(other_scale - scale.clone());
+
+        // Save the one with the smallest difference so far.
+        if let Some(best_diff_value) = best_diff.clone() {
+            if diff < best_diff_value {
+                best_diff = Some(diff.clone());
+                best_match = Some((long_name, short_name));
+            }
+        } else {
+            best_diff = Some(diff.clone());
+            best_match = Some((long_name, short_name));
+        }
+
+        if diff == Number::zero() {
+            break;
+        }
+    }
+
+    let Some((ref long_name, _)) = best_match else {
+        // If we did not find a matching named unit, just rescale the quantity and present it in base units
+        // For example, instead of Quantity(2, Unit(1337, meter * second))
+        //                      -> Quantity(2 * 1337, Unit( 1, meter * second)
+        //                      -> "2674000  m * s"
+        let rescaled_unit = unit.clone().rescaled(Number::one() / scale.clone());
+        let rescaled_quantity = Quantity {number: number.clone() * scale.clone(), unit: unit.clone()};
+        return (
+                rescaled_quantity,
+            (format!("{rescaled_unit}"), None)
+        );
+    };
+
+    // The best matching unit will be our target, so, let's rescale the provided quantity.
+    let Unit(target_scale, _) = env.get_unit(&long_name).unwrap();
+
+    // Now, we might need to rescale the original quantity to fit we the unit
+    // that we have selected.
+    let rescaled_quantity = Quantity {
+        number: number.clone() * target_scale.clone() / scale.clone(),
+        unit: Unit(target_scale, base_units.clone()),
+    };
+
+    (rescaled_quantity, best_match.unwrap())
 }
 
 fn eval_block(expressions: &Vec<Spanned<Expr>>, env: &mut Environment) -> Result<Value, Error> {

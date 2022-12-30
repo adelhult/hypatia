@@ -172,5 +172,5 @@ fn run(code: &str, env: &mut Environment) -> (Result<Vec<Format>, Vec<Error>>, D
         return (Err(vec![error]), start_time.elapsed());
     }
 
-    (Ok(get_formats(&value.unwrap())), start_time.elapsed())
+    (Ok(get_formats(&value.unwrap(), env)), start_time.elapsed())
 }
