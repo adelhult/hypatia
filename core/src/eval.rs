@@ -510,20 +510,21 @@ pub fn format_unit(
         //                      -> Quantity(2 * 1337, Unit( 1, meter * second)
         //                      -> "2674000  m * s"
         let rescaled_unit = unit.clone().rescaled(Number::one() / scale.clone());
-        let rescaled_quantity = Quantity {number: number.clone() * scale.clone(), unit: unit.clone()};
+        let rescaled_quantity = Quantity {number: number.clone() * scale.clone(), unit: rescaled_unit.clone()};
         return (
                 rescaled_quantity,
             (format!("{rescaled_unit}"), None)
         );
     };
 
-    // The best matching unit will be our target, so, let's rescale the provided quantity.
+    // If we instead found a match. Then the best matching unit will be our target, so, let's
+    // rescale the provided quantity to fit the unit
     let Unit(target_scale, _) = env.get_unit(&long_name).unwrap();
 
     // Now, we might need to rescale the original quantity to fit we the unit
     // that we have selected.
     let rescaled_quantity = Quantity {
-        number: number.clone() * target_scale.clone() / scale.clone(),
+        number: number.clone() * scale.clone() / target_scale.clone(),
         unit: Unit(target_scale, base_units.clone()),
     };
 
