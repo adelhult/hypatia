@@ -4,10 +4,10 @@
 unit second s
 unit seconds = second
 
-unit metre m
-unit metres = metre
-unit meter = metre
-unit meters = metre
+unit meter m
+unit meters = meter
+unit metre = meter
+unit metres = meter
 
 // Note: grams are used as the base unit in this system instead of kilograms
 unit gram g
