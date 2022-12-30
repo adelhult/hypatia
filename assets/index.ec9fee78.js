@@ -37587,11 +37587,9 @@ const AnimatePresence = ({
   });
 };
 const Result = styled.div`
-    padding:0.5rem;
     box-sizing: border-box;
-    background-color: #ededed;
     font-family: 'JetBrains Mono', monospace;
-    margin-top: 0;
+    margin-top: 0.2rem;
 `;
 const ResultData = styled.div`
     font-size:1rem;
@@ -37613,11 +37611,7 @@ const Time = styled.span`
 `;
 const Wrapper = styled(motion.div)`
     position: relative;
-    border: solid;
-    border-width: 1px;
-    border-color: #d0d0d7;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
+    margin-bottom: 1.5rem;
 `;
 const Remove$1 = styled.button`
     z-index: 1000;
@@ -37651,6 +37645,9 @@ const FormatButton = styled.button`
     padding: 0.2rem;
     border-radius: 0.2rem;
     transition: all 0.3s;
+`;
+const Editor = styled.div`
+  border: solid 2px #D6D6D6;
 `;
 const hotkeys = (addCellAction) => keymap.of([{
   key: "Alt-Enter",
@@ -37711,16 +37708,18 @@ const Cell = React.memo((props) => {
       title: "Remove cell",
       onClick: () => props.onRemove(props.index),
       children: /* @__PURE__ */ jsx(MdClose, {})
-    }), /* @__PURE__ */ jsx(ReactCodeMirror, {
-      onChange: (code) => props.onChange(props.index, code),
-      value: props.code,
-      theme,
-      autoFocus: true,
-      placeholder: props.index == 0 ? "try '10 m + 2 m'" : void 0,
-      extensions: [hotkeys(props.addCellAction)],
-      basicSetup: {
-        lineNumbers: props.code.match("\n") != null
-      }
+    }), /* @__PURE__ */ jsx(Editor, {
+      children: /* @__PURE__ */ jsx(ReactCodeMirror, {
+        onChange: (code) => props.onChange(props.index, code),
+        value: props.code,
+        theme,
+        autoFocus: true,
+        placeholder: props.index == 0 ? "try '10 m + 2 m'" : void 0,
+        extensions: [hotkeys(props.addCellAction)],
+        basicSetup: {
+          lineNumbers: props.code.match("\n") != null
+        }
+      })
     }), props.code && /* @__PURE__ */ jsxs(Result, {
       children: [/* @__PURE__ */ jsx(Formats, {
         children: output.map(([value, format]) => format && /* @__PURE__ */ jsx(FormatButton, {
@@ -37746,22 +37745,25 @@ const Cell = React.memo((props) => {
 });
 const Box = styled(motion.div)`
     position: relative;
+    width: 100%;
     display: flex;
-    flex-direction: column;
-    border-radius: 0.2rem;
+    gap: 2rem;
     align-items: flex-start;
-    background: #6B8F71;
+    justify-content: center;
+    background: #4C956C;
     color: white;
     padding: 1rem;
     box-sizing: border-box;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 2px rgba(0,0,0, 0.1);
+
+    @media (max-width: 800px) {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 `;
 const Remove = styled.button`
     z-index: 1000;
     position: absolute;
-    right: 3px;
-    top: 6px;
+    right: 1rem;
     font-size: 1rem;
     background: none;
     border: none;
@@ -37782,7 +37784,6 @@ const Action$1 = styled.button`
     font-family: inherit;
     padding:0;
     font-size: 1rem;
-    margin-top: 0.7rem;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -37790,26 +37791,21 @@ const Action$1 = styled.button`
         background:rgba(1,1,1, 0.1);
     }
 `;
-const Title = styled.span`
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 0.2rem;
-`;
 function Prompt(props) {
   const [show, setShow] = react.exports.useState(true);
   return /* @__PURE__ */ jsx(AnimatePresence, {
     children: show && props.show && /* @__PURE__ */ jsxs(Box, {
       initial: {
-        x: -50,
-        opacity: 0
+        translateY: "-150%"
       },
       animate: {
-        x: 0,
-        opacity: 1
+        translateY: "0%"
       },
       exit: {
-        x: 50,
-        opacity: 0
+        translateY: "-150%"
+      },
+      transition: {
+        easings: ["easeIn", "easeOut"]
       },
       className: "Prompt",
       children: [/* @__PURE__ */ jsx(Remove, {
@@ -37820,9 +37816,11 @@ function Prompt(props) {
             color: "white"
           }
         })
-      }), props.title && /* @__PURE__ */ jsx(Title, {
-        children: props.title
-      }), props.children, /* @__PURE__ */ jsx(Action$1, {
+      }), /* @__PURE__ */ jsxs("div", {
+        children: [props.title && /* @__PURE__ */ jsx("strong", {
+          children: props.title
+        }), " ", props.children]
+      }), /* @__PURE__ */ jsx(Action$1, {
         onClick: props.handleAction,
         children: props.action
       })]
@@ -38250,6 +38248,8 @@ const Action = styled.button`
   margin-right: 0.5rem;
   border: none;
   border-radius: 0.2rem;
+  background: #F0C808;
+  border: solid 2px black;
 `;
 function App() {
   var _a2, _b;
@@ -38292,14 +38292,14 @@ function App() {
   }, [state.cells, state.previousSession]);
   return /* @__PURE__ */ jsxs("div", {
     className: "App",
-    children: [/* @__PURE__ */ jsx(Menu, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
-      children: [/* @__PURE__ */ jsx(Prompt, {
-        title: "Welcome back!",
-        show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
-        action: "Restore session",
-        handleAction: () => recoverSession(state, dispatch),
-        children: "You have a previous session saved since last time."
-      }), state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
+    children: [/* @__PURE__ */ jsx(Prompt, {
+      title: "Welcome back!",
+      show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
+      action: "Restore session",
+      handleAction: () => recoverSession(state, dispatch),
+      children: "You have a previous session saved since last time."
+    }), /* @__PURE__ */ jsx(Menu, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
+      children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
         noAnimation: index2 == 0,
         code: cell.code,
         output: cell.output,

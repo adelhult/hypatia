@@ -1,6 +1,6 @@
 :root {
-  background-color: #fbfbfb;
-  font-family: 'Noto Serif', serif;
+  background-color: #FDFFFC;
+  font-family: 'Rubik', sans-serif;
   box-sizing: border-box;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,4 +17,9 @@ body {
 .cm-editor .cm-content {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1rem;
+}
+
+input, button {
+  font-weight: 500;
+  font-family: 'Rubik', sans-serif;
 }
