@@ -153,7 +153,7 @@ const Cell = React.memo((props: CellProps) => {
           value={props.code}
           theme={theme}
           autoFocus
-          placeholder={props.index == 0 ? "try '10 m + 2 m'" : undefined}
+          placeholder={props.index == 0 ? "try '10 m + 2 km'" : undefined}
           extensions={[hotkeys(props.addCellAction)]}
           basicSetup={{
             lineNumbers: props.code.match("\n") != null,

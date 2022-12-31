@@ -17,6 +17,7 @@ export type Cell = {
 
 export type State = {
   cells: Cell[];
+  helpOpen: boolean;
   previousSession: string[] | null;
   sessionRestored: boolean;
   loaded: boolean;
@@ -40,6 +41,9 @@ export type Action =
   }
   | {
     type: "restore session";
+  }
+  | {
+    type: "toggle help";
   };
 
 // Note: we don't wan't to sync the web assembly state inside of the reducer since it is pure function.
@@ -92,8 +96,19 @@ export const reducer = (state: State, action: Action): State => {
         })),
       };
     }
+
+    case "toggle help": {
+      return {
+        ...state,
+        helpOpen: !state.helpOpen,
+      };
+    }
   }
 };
+
+export function toggleHelp(dispatch: (action: Action) => void) {
+  dispatch({ type: "toggle help" });
+}
 
 export function writeCell(
   index: number,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Box = styled(motion.div)`
-    position: absolute;
+    position: relative;
     width: 100%;
     top: 0;
     display: flex;
@@ -15,6 +15,7 @@ const Box = styled(motion.div)`
     color: white;
     padding: 1rem;
     box-sizing: border-box;
+    z-index: 100;
 
     @media (max-width: 800px) {
         flex-direction: column;

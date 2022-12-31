@@ -1,6 +1,7 @@
 import Menu from "./Menu";
 import Cell from "./Cell";
 import Prompt from "./Prompt";
+import Help from "./Help";
 import styled from "styled-components";
 import {
   addCell,
@@ -9,6 +10,7 @@ import {
   reducer,
   removeCell,
   State,
+  toggleHelp,
   useWasm,
   writeCell,
 } from "./state";
@@ -16,12 +18,19 @@ import { MdAddCircleOutline } from "react-icons/md";
 import { useEffect, useReducer } from "react";
 
 const Workspace = styled.div`
-  width: 100%;
   max-width: 700px;
+  min-width: 380px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
   padding: 1rem;
+`;
+
+const Container = styled.div`
+  position: relative;
+  height: 100vh;
+  display:flex;
+  justify-content: space-between;
 `;
 
 const Actions = styled.div`
@@ -49,7 +58,13 @@ const Action = styled.button`
 function App() {
   const [state, dispatch] = useReducer(
     reducer,
-    { cells: [], previousSession: null, loaded: false, sessionRestored: false },
+    {
+      cells: [],
+      previousSession: null,
+      loaded: false,
+      sessionRestored: false,
+      helpOpen: false,
+    },
     (state: State) => {
       // Load the previous session from local
       let parsedData = localStorage.getItem("cells");
@@ -84,7 +99,7 @@ function App() {
   }, [state.cells, state.previousSession]);
 
   return (
-    <div className="App">
+    <div>
       <Prompt
         title="Welcome back!"
         show={!state.sessionRestored &&
@@ -94,29 +109,34 @@ function App() {
       >
         You have a previous session saved since last time.
       </Prompt>
-      <Menu />
-      {state.loaded && (
-        <Workspace>
-          {state.cells.map((cell, index) => (
-            <Cell
-              key={index}
-              noAnimation={index == 0}
-              code={cell.code}
-              output={cell.output}
-              time={cell.time}
-              onChange={(i, code) => writeCell(i, code, dispatch)}
-              onRemove={(i) => removeCell(i, dispatch)}
-              addCellAction={() => addCell(state, dispatch)}
-              index={index}
-            />
-          ))}
-          <Actions>
-            <Action onClick={() => addCell(state, dispatch)}>
-              New Cell <MdAddCircleOutline size="1.2rem" />
-            </Action>
-          </Actions>
-        </Workspace>
-      )}
+      <Container>
+        <div style={{ width: "100%" }}>
+          <Menu toggleHelp={() => toggleHelp(dispatch)} />
+          {state.loaded && (
+            <Workspace>
+              {state.cells.map((cell, index) => (
+                <Cell
+                  key={index}
+                  noAnimation={index == 0}
+                  code={cell.code}
+                  output={cell.output}
+                  time={cell.time}
+                  onChange={(i, code) => writeCell(i, code, dispatch)}
+                  onRemove={(i) => removeCell(i, dispatch)}
+                  addCellAction={() => addCell(state, dispatch)}
+                  index={index}
+                />
+              ))}
+              <Actions>
+                <Action onClick={() => addCell(state, dispatch)}>
+                  New Cell <MdAddCircleOutline size="1.2rem" />
+                </Action>
+              </Actions>
+            </Workspace>
+          )}
+        </div>
+        <Help show={state.helpOpen} />
+      </Container>
     </div>
   );
 }

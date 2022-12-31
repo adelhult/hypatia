@@ -1,12 +1,12 @@
 import styled from "styled-components";
+import { FaBook, FaGithub } from "react-icons/fa";
 const Container = styled.div`
     display: flex;
     width: 100%;
     box-sizing: border-box;
     padding: 1rem;
-    justify-content: center;
-    align-items: center;
-    margin-top: 4rem;
+    justify-content: space-between;
+    align-items: center;  
 `;
 
 const LogoContainer = styled.div`
@@ -15,7 +15,7 @@ const LogoContainer = styled.div`
 `;
 
 const Logo = styled.img`
-    max-width: 8rem;
+    width: 6rem;
     margin-right: 0.5rem;
 `;
 
@@ -24,7 +24,26 @@ const LogoText = styled.h1`
     font-weight: normal;
 `;
 
-export default function Menu() {
+const Buttons = styled.div`
+  display: flex;
+  gap: 1rem;
+
+  &>button {
+  border: solid 2px black;
+  border-radius: 0.2rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+`;
+
+type MenuProps = {
+  toggleHelp: () => void;
+};
+
+export default function Menu({ toggleHelp }: MenuProps) {
   return (
     <Container className="Menu">
       <LogoContainer>
@@ -34,6 +53,16 @@ export default function Menu() {
           <br />Calculator
         </LogoText>
       </LogoContainer>
+      <Buttons>
+        <button
+          onClick={() => location.href = "https://github.com/adelhult/hypatia"}
+        >
+          Github <FaGithub />
+        </button>
+        <button onClick={toggleHelp}>
+          Help <FaBook />
+        </button>
+      </Buttons>
     </Container>
   );
 }
