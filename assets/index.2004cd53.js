@@ -8829,6 +8829,14 @@ var He = function(e2) {
   He[e2] = He(e2);
 });
 const styled = He;
+var DefaultContext = {
+  color: void 0,
+  size: void 0,
+  className: void 0,
+  style: void 0,
+  attr: void 0
+};
+var IconContext = React.createContext && React.createContext(DefaultContext);
 var jsxRuntime = { exports: {} };
 var reactJsxRuntime_production_min = {};
 /**
@@ -8864,31 +8872,127 @@ reactJsxRuntime_production_min.jsxs = q;
 const Fragment = jsxRuntime.exports.Fragment;
 const jsx = jsxRuntime.exports.jsx;
 const jsxs = jsxRuntime.exports.jsxs;
-const Container = styled.div`
+var __assign = globalThis && globalThis.__assign || function() {
+  __assign = Object.assign || function(t2) {
+    for (var s, i = 1, n2 = arguments.length; i < n2; i++) {
+      s = arguments[i];
+      for (var p2 in s)
+        if (Object.prototype.hasOwnProperty.call(s, p2))
+          t2[p2] = s[p2];
+    }
+    return t2;
+  };
+  return __assign.apply(this, arguments);
+};
+var __rest$1 = globalThis && globalThis.__rest || function(s, e2) {
+  var t2 = {};
+  for (var p2 in s)
+    if (Object.prototype.hasOwnProperty.call(s, p2) && e2.indexOf(p2) < 0)
+      t2[p2] = s[p2];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function")
+    for (var i = 0, p2 = Object.getOwnPropertySymbols(s); i < p2.length; i++) {
+      if (e2.indexOf(p2[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p2[i]))
+        t2[p2[i]] = s[p2[i]];
+    }
+  return t2;
+};
+function Tree2Element(tree) {
+  return tree && tree.map(function(node, i) {
+    return React.createElement(node.tag, __assign({
+      key: i
+    }, node.attr), Tree2Element(node.child));
+  });
+}
+function GenIcon(data) {
+  return function(props) {
+    return /* @__PURE__ */ jsx(IconBase, {
+      ...__assign({
+        attr: __assign({}, data.attr)
+      }, props),
+      children: Tree2Element(data.child)
+    });
+  };
+}
+function IconBase(props) {
+  var elem = function(conf) {
+    var attr = props.attr, size = props.size, title = props.title, svgProps = __rest$1(props, ["attr", "size", "title"]);
+    var computedSize = size || conf.size || "1em";
+    var className;
+    if (conf.className)
+      className = conf.className;
+    if (props.className)
+      className = (className ? className + " " : "") + props.className;
+    return /* @__PURE__ */ jsxs("svg", {
+      ...__assign({
+        stroke: "currentColor",
+        fill: "currentColor",
+        strokeWidth: "0"
+      }, conf.attr, attr, svgProps, {
+        className,
+        style: __assign(__assign({
+          color: props.color || conf.color
+        }, conf.style), props.style),
+        height: computedSize,
+        width: computedSize,
+        xmlns: "http://www.w3.org/2000/svg"
+      }),
+      children: [title && /* @__PURE__ */ jsx("title", {
+        children: title
+      }), props.children]
+    });
+  };
+  return IconContext !== void 0 ? /* @__PURE__ */ jsx(IconContext.Consumer, {
+    children: function(conf) {
+      return elem(conf);
+    }
+  }) : elem(DefaultContext);
+}
+function FaGithub(props) {
+  return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 496 512" }, "child": [{ "tag": "path", "attr": { "d": "M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z" } }] })(props);
+}
+function FaBook(props) {
+  return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 448 512" }, "child": [{ "tag": "path", "attr": { "d": "M448 360V24c0-13.3-10.7-24-24-24H96C43 0 0 43 0 96v320c0 53 43 96 96 96h328c13.3 0 24-10.7 24-24v-16c0-7.5-3.5-14.3-8.9-18.7-4.2-15.4-4.2-59.3 0-74.7 5.4-4.3 8.9-11.1 8.9-18.6zM128 134c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm0 64c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm253.4 250H96c-17.7 0-32-14.3-32-32 0-17.6 14.4-32 32-32h285.4c-1.9 17.1-1.9 46.9 0 64z" } }] })(props);
+}
+const Container$2 = styled.div`
     display: flex;
     width: 100%;
     box-sizing: border-box;
     padding: 1rem;
-    justify-content: center;
-    align-items: center;
-    margin-top: 4rem;
+    justify-content: space-between;
+    align-items: center;  
 `;
 const LogoContainer = styled.div`
   display: flex;
   align-items: center;  
 `;
 const Logo = styled.img`
-    max-width: 8rem;
+    width: 6rem;
     margin-right: 0.5rem;
 `;
 const LogoText = styled.h1`
     font-size: 1.6rem;
     font-weight: normal;
 `;
-function Menu() {
-  return /* @__PURE__ */ jsx(Container, {
+const Buttons = styled.div`
+  display: flex;
+  gap: 1rem;
+
+  &>button {
+  border: solid 2px black;
+  border-radius: 0.2rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+`;
+function Menu({
+  toggleHelp: toggleHelp2
+}) {
+  return /* @__PURE__ */ jsxs(Container$2, {
     className: "Menu",
-    children: /* @__PURE__ */ jsxs(LogoContainer, {
+    children: [/* @__PURE__ */ jsxs(LogoContainer, {
       children: [/* @__PURE__ */ jsx(Logo, {
         src: "logo.png"
       }), /* @__PURE__ */ jsxs(LogoText, {
@@ -8896,7 +9000,15 @@ function Menu() {
           children: "Hypatia"
         }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
       })]
-    })
+    }), /* @__PURE__ */ jsxs(Buttons, {
+      children: [/* @__PURE__ */ jsxs("button", {
+        onClick: () => location.href = "https://github.com/adelhult/hypatia",
+        children: ["Github ", /* @__PURE__ */ jsx(FaGithub, {})]
+      }), /* @__PURE__ */ jsxs("button", {
+        onClick: toggleHelp2,
+        children: ["Help ", /* @__PURE__ */ jsx(FaBook, {})]
+      })]
+    })]
   });
 }
 class Text {
@@ -26452,89 +26564,6 @@ var ReactCodeMirror = /* @__PURE__ */ react.exports.forwardRef((props, ref) => {
   }, other));
 });
 ReactCodeMirror.displayName = "CodeMirror";
-var DefaultContext = {
-  color: void 0,
-  size: void 0,
-  className: void 0,
-  style: void 0,
-  attr: void 0
-};
-var IconContext = React.createContext && React.createContext(DefaultContext);
-var __assign = globalThis && globalThis.__assign || function() {
-  __assign = Object.assign || function(t2) {
-    for (var s, i = 1, n2 = arguments.length; i < n2; i++) {
-      s = arguments[i];
-      for (var p2 in s)
-        if (Object.prototype.hasOwnProperty.call(s, p2))
-          t2[p2] = s[p2];
-    }
-    return t2;
-  };
-  return __assign.apply(this, arguments);
-};
-var __rest$1 = globalThis && globalThis.__rest || function(s, e2) {
-  var t2 = {};
-  for (var p2 in s)
-    if (Object.prototype.hasOwnProperty.call(s, p2) && e2.indexOf(p2) < 0)
-      t2[p2] = s[p2];
-  if (s != null && typeof Object.getOwnPropertySymbols === "function")
-    for (var i = 0, p2 = Object.getOwnPropertySymbols(s); i < p2.length; i++) {
-      if (e2.indexOf(p2[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p2[i]))
-        t2[p2[i]] = s[p2[i]];
-    }
-  return t2;
-};
-function Tree2Element(tree) {
-  return tree && tree.map(function(node, i) {
-    return React.createElement(node.tag, __assign({
-      key: i
-    }, node.attr), Tree2Element(node.child));
-  });
-}
-function GenIcon(data) {
-  return function(props) {
-    return /* @__PURE__ */ jsx(IconBase, {
-      ...__assign({
-        attr: __assign({}, data.attr)
-      }, props),
-      children: Tree2Element(data.child)
-    });
-  };
-}
-function IconBase(props) {
-  var elem = function(conf) {
-    var attr = props.attr, size = props.size, title = props.title, svgProps = __rest$1(props, ["attr", "size", "title"]);
-    var computedSize = size || conf.size || "1em";
-    var className;
-    if (conf.className)
-      className = conf.className;
-    if (props.className)
-      className = (className ? className + " " : "") + props.className;
-    return /* @__PURE__ */ jsxs("svg", {
-      ...__assign({
-        stroke: "currentColor",
-        fill: "currentColor",
-        strokeWidth: "0"
-      }, conf.attr, attr, svgProps, {
-        className,
-        style: __assign(__assign({
-          color: props.color || conf.color
-        }, conf.style), props.style),
-        height: computedSize,
-        width: computedSize,
-        xmlns: "http://www.w3.org/2000/svg"
-      }),
-      children: [title && /* @__PURE__ */ jsx("title", {
-        children: title
-      }), props.children]
-    });
-  };
-  return IconContext !== void 0 ? /* @__PURE__ */ jsx(IconContext.Consumer, {
-    children: function(conf) {
-      return elem(conf);
-    }
-  }) : elem(DefaultContext);
-}
 function MdAddCircleOutline(props) {
   return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 24 24" }, "child": [{ "tag": "path", "attr": { "fill": "none", "d": "M0 0h24v24H0z" } }, { "tag": "path", "attr": { "d": "M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" } }] })(props);
 }
@@ -37714,7 +37743,7 @@ const Cell = React.memo((props) => {
         value: props.code,
         theme,
         autoFocus: true,
-        placeholder: props.index == 0 ? "try '10 m + 2 m'" : void 0,
+        placeholder: props.index == 0 ? "try '10 m + 2 km'" : void 0,
         extensions: [hotkeys(props.addCellAction)],
         basicSetup: {
           lineNumbers: props.code.match("\n") != null
@@ -37744,7 +37773,7 @@ const Cell = React.memo((props) => {
   });
 });
 const Box = styled(motion.div)`
-    position: absolute;
+    position: relative;
     width: 100%;
     top: 0;
     display: flex;
@@ -37755,6 +37784,7 @@ const Box = styled(motion.div)`
     color: white;
     padding: 1rem;
     box-sizing: border-box;
+    z-index: 100;
 
     @media (max-width: 800px) {
         flex-direction: column;
@@ -37826,6 +37856,138 @@ function Prompt(props) {
         children: props.action
       })]
     })
+  });
+}
+const Container$1 = styled(motion.div)`
+  height: 100vh;
+  padding: 1rem;
+  flex-grow: 0;
+  font-weight: 300;
+  max-width: 25rem;
+  border-left: solid 4px black;
+  overflow-y: auto;
+  box-sizing: border-box;
+  &>h1 {
+    font-size: 1.5rem;
+   }
+
+  &>h2 {
+    font-size: 1.2rem;
+    line-height: 1;
+    margin-bottom:0.2rem;
+   }
+`;
+function Example({
+  value
+}) {
+  return /* @__PURE__ */ jsx(ReactCodeMirror, {
+    readOnly: true,
+    value,
+    basicSetup: {
+      highlightActiveLineGutter: false,
+      lineNumbers: false,
+      highlightActiveLine: false
+    }
+  });
+}
+function Help({
+  show
+}) {
+  return /* @__PURE__ */ jsx(AnimatePresence, {
+    children: show ? /* @__PURE__ */ jsxs(Container$1, {
+      transition: {
+        easings: ["easeIn", "easeOut"]
+      },
+      initial: {
+        width: 0
+      },
+      animate: {
+        width: "100%"
+      },
+      exit: {
+        width: 0
+      },
+      children: [/* @__PURE__ */ jsx("h1", {
+        children: "Help"
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "It's a calculator!"
+      }), "Evaluate mathematical expressions", /* @__PURE__ */ jsx(Example, {
+        value: `10 + 20
+2 km / 3
+sin(20 degrees) * 3`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Convert units"
+      }), "The `->` keyword can be used to convert between compatible units", /* @__PURE__ */ jsx(Example, {
+        value: `2 km + 3 mile -> meter`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Literals"
+      }), "Binary, hexadecimal and scientific literals are supported", /* @__PURE__ */ jsx(Example, {
+        value: `0xa2a3
+0b101010
+3e-2`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Variables"
+      }), "Declare variables with the `=` operator. Use the `update` keyword to reassign a new value to the same name.", /* @__PURE__ */ jsx(Example, {
+        value: `width = 20 m
+height = 30 m
+update height = 35 m
+              
+area = width * height`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Block expressions"
+      }), "A pair of curly braces are used to create a block and a new variable scope. Variables declared inside of the block exits only within that block. The last expression in the block is what the block itself evaluates to.", /* @__PURE__ */ jsx(Example, {
+        value: `area = {
+  width = 20 m
+  height = 30 m
+  width * height
+}`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Conditional expressions"
+      }), /* @__PURE__ */ jsx(Example, {
+        value: `if true {
+// ...
+} else {
+  // ...
+}
+              
+if true {
+  // ...
+} else if true {
+  // ...
+}`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Functions"
+      }), /* @__PURE__ */ jsx(Example, {
+        value: `f(x) = 2 * x + 5
+
+fibbonaci(n) = if n <= 1 {
+  1
+} else {
+  fibbonaci(n - 1) + fibbonaci(n - 2)
+}`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Custom units"
+      }), /* @__PURE__ */ jsx(Example, {
+        value: `unit kronor kr
+unit dollar usd = 10 kr
+10 usd + 50 kr`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Costum prefixes"
+      }), /* @__PURE__ */ jsx(Example, {
+        value: `prefix super = 10000000
+15 supergram`
+      }), /* @__PURE__ */ jsx("h1", {
+        children: "Language reference"
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Keywords and operators"
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Built-in functions"
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Built-in units"
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Built-in prefixes"
+      })]
+    }) : ""
   });
 }
 let wasm;
@@ -38179,8 +38341,19 @@ const reducer = (state, action) => {
         }))
       };
     }
+    case "toggle help": {
+      return {
+        ...state,
+        helpOpen: !state.helpOpen
+      };
+    }
   }
 };
+function toggleHelp(dispatch) {
+  dispatch({
+    type: "toggle help"
+  });
+}
 function writeCell(index2, code, dispatch) {
   const updatedCells = write_cell(index2, code);
   dispatch({
@@ -38225,12 +38398,18 @@ function useWasm(dispatch) {
   }, []);
 }
 const Workspace = styled.div`
-  width: 100%;
   max-width: 700px;
+  min-width: 380px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
   padding: 1rem;
+`;
+const Container = styled.div`
+  position: relative;
+  height: 100vh;
+  display:flex;
+  justify-content: space-between;
 `;
 const Actions = styled.div`
   display: flex;
@@ -38258,7 +38437,8 @@ function App() {
     cells: [],
     previousSession: null,
     loaded: false,
-    sessionRestored: false
+    sessionRestored: false,
+    helpOpen: false
   }, (state2) => {
     let parsedData = localStorage.getItem("cells");
     if (!parsedData) {
@@ -38292,30 +38472,40 @@ function App() {
     localStorage.setItem("cells", JSON.stringify(state.cells.map((cell) => cell.code)));
   }, [state.cells, state.previousSession]);
   return /* @__PURE__ */ jsxs("div", {
-    className: "App",
     children: [/* @__PURE__ */ jsx(Prompt, {
       title: "Welcome back!",
       show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
       action: "Restore session",
       handleAction: () => recoverSession(state, dispatch),
       children: "You have a previous session saved since last time."
-    }), /* @__PURE__ */ jsx(Menu, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
-      children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
-        noAnimation: index2 == 0,
-        code: cell.code,
-        output: cell.output,
-        time: cell.time,
-        onChange: (i, code) => writeCell(i, code, dispatch),
-        onRemove: (i) => removeCell(i, dispatch),
-        addCellAction: () => addCell(state, dispatch),
-        index: index2
-      }, index2)), /* @__PURE__ */ jsx(Actions, {
-        children: /* @__PURE__ */ jsxs(Action, {
-          onClick: () => addCell(state, dispatch),
-          children: ["New Cell ", /* @__PURE__ */ jsx(MdAddCircleOutline, {
-            size: "1.2rem"
+    }), /* @__PURE__ */ jsxs(Container, {
+      children: [/* @__PURE__ */ jsxs("div", {
+        style: {
+          width: "100%"
+        },
+        children: [/* @__PURE__ */ jsx(Menu, {
+          toggleHelp: () => toggleHelp(dispatch)
+        }), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
+          children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
+            noAnimation: index2 == 0,
+            code: cell.code,
+            output: cell.output,
+            time: cell.time,
+            onChange: (i, code) => writeCell(i, code, dispatch),
+            onRemove: (i) => removeCell(i, dispatch),
+            addCellAction: () => addCell(state, dispatch),
+            index: index2
+          }, index2)), /* @__PURE__ */ jsx(Actions, {
+            children: /* @__PURE__ */ jsxs(Action, {
+              onClick: () => addCell(state, dispatch),
+              children: ["New Cell ", /* @__PURE__ */ jsx(MdAddCircleOutline, {
+                size: "1.2rem"
+              })]
+            })
           })]
-        })
+        })]
+      }), /* @__PURE__ */ jsx(Help, {
+        show: state.helpOpen
       })]
     })]
   });
