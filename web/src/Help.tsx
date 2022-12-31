@@ -61,7 +61,7 @@ export default function Help({ show }: HelpProps) {
 sin(20 degrees) * 3`}
             />
             <h2>Convert units</h2>
-            The `->` keyword can be used to convert between compatible units
+            The `-&gt;` keyword can be used to convert between compatible units
             <Example
               value={`2 km + 3 mile -> meter`}
             />
