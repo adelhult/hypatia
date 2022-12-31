@@ -8871,7 +8871,7 @@ const Container = styled.div`
     padding: 1rem;
     justify-content: center;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-top: 4rem;
 `;
 const LogoContainer = styled.div`
   display: flex;
@@ -37744,8 +37744,9 @@ const Cell = React.memo((props) => {
   });
 });
 const Box = styled(motion.div)`
-    position: relative;
+    position: absolute;
     width: 100%;
+    top: 0;
     display: flex;
     gap: 2rem;
     align-items: flex-start;
