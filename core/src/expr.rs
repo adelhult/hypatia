@@ -31,6 +31,12 @@ pub enum BinOp {
     Div,
     Mul,
     Sub,
+    Equal,
+    NotEqual,
+    Lt,
+    Gt,
+    Gte,
+    Lte,
 }
 
 #[derive(Clone, Debug, PartialEq)]

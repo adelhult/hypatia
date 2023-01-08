@@ -9,10 +9,11 @@ use crate::{
     units::{BaseUnit, Quantity, Unit},
     Error, Expr,
 };
+use std::cmp;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Nothing,
     Bool(bool),
@@ -76,6 +77,12 @@ pub struct Function {
     parameters: Vec<String>,
     env: Environment, // FIXME: I need to make the Environment a lot cheaper to clone, should just be a smart pointer.
                       // That means that I need to move the units and prefixes into Arc<Mutex<..>>
+}
+
+impl cmp::PartialEq for Function {
+    fn eq(&self, _: &Self) -> bool {
+        false
+    }
 }
 
 /// Used to keep track of additional information related to a Unit/Prefix
@@ -423,14 +430,22 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         }
         Expr::Program(expressions) => eval_block(expressions, env),
         Expr::BinOp(op, a, b) => {
-            let a = eval(a, env)?.quantity()?;
-            let b = eval(b, env)?.quantity()?;
-            Ok(Value::Quantity(match op {
-                BinOp::Add => (a + b)?,
-                BinOp::Sub => (a - b)?,
-                BinOp::Div => a / b,
-                BinOp::Mul => a * b,
-            }))
+            let a = eval(a, env)?;
+            let b = eval(b, env)?;
+
+            use BinOp::*;
+            Ok(match op {
+                Add => Value::Quantity((a.quantity()? + b.quantity()?)?),
+                Sub => Value::Quantity((a.quantity()? - b.quantity()?)?),
+                Div => Value::Quantity(a.quantity()? / b.quantity()?),
+                Mul => Value::Quantity(a.quantity()? * b.quantity()?),
+                Equal => Value::Bool(a == b),
+                NotEqual => Value::Bool(a != b),
+                Lt => Value::Bool(a.quantity()? < b.quantity()?),
+                Gt => Value::Bool(a.quantity()? > b.quantity()?),
+                Gte => Value::Bool(a.quantity()? >= b.quantity()?),
+                Lte => Value::Bool(a.quantity()? <= b.quantity()?),
+            })
         }
         Expr::BaseUnitDecl(long_name, short_name) => {
             env.declare_unit(long_name, short_name, None)?;

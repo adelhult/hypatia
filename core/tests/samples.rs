@@ -107,3 +107,8 @@ fn update_function() {
 fn nested_functions() {
     run_test_file(Path::new("./samples/nested_functions.hyp"));
 }
+
+#[test]
+fn comparison() {
+    run_test_file(Path::new("./samples/comparison.hyp"));
+}

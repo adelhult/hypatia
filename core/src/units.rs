@@ -1,11 +1,57 @@
 use crate::{number::Number, Error};
 use num::rational::Ratio;
-use std::{collections::BTreeMap, fmt, ops};
+use std::{cmp, collections::BTreeMap, fmt, ops};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Quantity {
     pub number: Number,
     pub unit: Unit,
+}
+
+impl cmp::PartialEq for Quantity {
+    fn eq(&self, other: &Self) -> bool {
+        let Quantity {
+            number: self_number,
+            unit: Unit(self_scale, self_base_units),
+        } = self.clone();
+
+        let Quantity {
+            number: other_number,
+            unit: Unit(other_scale, other_base_units),
+        } = other.clone();
+
+        if self_base_units != other_base_units {
+            return false;
+        }
+
+        // Rescale so that they have the same unit, then we
+        // compare them
+        let rescaled_self_number = self_number * (self_scale / other_scale.clone());
+
+        rescaled_self_number == other_number
+    }
+}
+
+impl cmp::PartialOrd for Quantity {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        let Quantity {
+            number: self_number,
+            unit: Unit(self_scale, self_base_units),
+        } = self.clone();
+
+        let Quantity {
+            number: other_number,
+            unit: Unit(other_scale, other_base_units),
+        } = other.clone();
+
+        if self_base_units != other_base_units {
+            return None;
+        }
+
+        let rescaled_self_number = self_number * (self_scale / other_scale.clone());
+
+        rescaled_self_number.partial_cmp(&other_number)
+    }
 }
 
 impl fmt::Display for Quantity {

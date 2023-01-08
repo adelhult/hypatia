@@ -3,6 +3,9 @@ use crate::Error;
 use chumsky::{prelude::*, Stream};
 use std::fmt;
 
+// Greatly inspired by the  Chumsky tutorial
+// and the Tao language implementation (https://github.com/zesterer/tao)
+
 /// Parse some source text into an abstract syntax tree of Expr nodes
 pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
     let (tokens, lexing_errors) = lexer().parse_recovery(source);
@@ -166,7 +169,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         .map(|((base, sign), exponent)| Token::ScientificNum(base, exponent, sign.is_some()));
 
     // operators
-    let ops = select! {
+    let single_char_op = select! {
         '=' => Token::Assignment,
         '+' => Token::Add,
         '-' => Token::Sub,
@@ -174,11 +177,14 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         '/' => Token::Div,
         '<' => Token::Lt,
         '>' => Token::Gt,
-    }
-    .or(just("<=").to(Token::Lte))
-    .or(just(">=").to(Token::Gte))
-    .or(just("==").to(Token::Equal))
-    .or(just("!=").to(Token::NotEqual));
+    };
+
+    let ops = just("<=")
+        .to(Token::Lte)
+        .or(just(">=").to(Token::Gte))
+        .or(just("==").to(Token::Equal))
+        .or(just("!=").to(Token::NotEqual))
+        .or(single_char_op);
 
     // Control characters
     let control = select! {
@@ -409,10 +415,27 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
             });
 
-        // FIXME: unary operators and comparison
+        // Comparison operators
+        let op = just(Token::Lt)
+            .to(BinOp::Lt)
+            .or(just(Token::Lte).to(BinOp::Lte))
+            .or(just(Token::Gt).to(BinOp::Gt))
+            .or(just(Token::Gte).to(BinOp::Gte))
+            .or(just(Token::Equal).to(BinOp::Equal))
+            .or(just(Token::NotEqual).to(BinOp::NotEqual));
+
+        let comparison = sum
+            .clone()
+            .then(op.then(sum).repeated())
+            .foldl(|a, (operator, b)| {
+                let span = a.1.start..b.1.end;
+                (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
+            });
+
+        // FIXME: logic operators
 
         // 20 m + 3 km in miles
-        let conversion = sum
+        let conversion = comparison
             .clone()
             .then_ignore(just(Token::In))
             .then(product)
@@ -454,7 +477,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 })
         });
 
-        block.or(if_).or(conversion).or(sum)
+        block.or(if_).or(conversion).or(comparison)
     });
 
     expr.clone()
