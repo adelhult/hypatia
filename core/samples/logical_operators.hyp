@@ -1,0 +1,3 @@
+(false xor not false) and (true or false)
+// Result:
+true

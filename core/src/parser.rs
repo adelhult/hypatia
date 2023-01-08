@@ -79,6 +79,9 @@ enum Token {
     Comment,
     Prefix,
     Not,
+    And,
+    Xor,
+    Or,
     In,
 }
 
@@ -126,6 +129,9 @@ impl fmt::Display for Token {
             Token::Not => write!(f, "not"),
             Token::Prefix => write!(f, "prefix"),
             Token::In => write!(f, "in"),
+            Token::And => write!(f, "and"),
+            Token::Xor => write!(f, "xor"),
+            Token::Or => write!(f, "or"),
         }
     }
 }
@@ -210,6 +216,9 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         "false" => Token::Bool(false),
         "nothing" => Token::Nothing,
         "in" => Token::In,
+        "and" => Token::And,
+        "or" => Token::Or,
+        "xor" => Token::Xor,
         s => Token::Ident(s.into()),
     });
 
@@ -424,21 +433,33 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             .or(just(Token::Equal).to(BinOp::Equal))
             .or(just(Token::NotEqual).to(BinOp::NotEqual));
 
-        let comparison = sum
+        let comparison =
+            sum.clone()
+                .then(op.then(sum.clone()).repeated())
+                .foldl(|a, (operator, b)| {
+                    let span = a.1.start..b.1.end;
+                    (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
+                });
+
+        // Logical operators
+        let op = just(Token::And)
+            .to(BinOp::And)
+            .or(just(Token::Or).to(BinOp::Or))
+            .or(just(Token::Xor).to(BinOp::Xor));
+
+        let logical = comparison
             .clone()
-            .then(op.then(sum).repeated())
+            .then(op.then(comparison).repeated())
             .foldl(|a, (operator, b)| {
                 let span = a.1.start..b.1.end;
                 (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
             });
 
-        // FIXME: logic operators
-
         // 20 m + 3 km in miles
-        let conversion = comparison
+        let conversion = logical
             .clone()
             .then_ignore(just(Token::In))
-            .then(product)
+            .then(logical.clone())
             .map_with_span(|(e, unit), span| (Expr::Conversion(Box::new(e), Box::new(unit)), span));
 
         // multiple expressions separated by line breaks or ";".
@@ -477,7 +498,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 })
         });
 
-        block.or(if_).or(conversion).or(comparison)
+        block.or(if_).or(conversion).or(logical)
     });
 
     expr.clone()

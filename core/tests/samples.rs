@@ -112,3 +112,8 @@ fn nested_functions() {
 fn comparison() {
     run_test_file(Path::new("./samples/comparison.hyp"));
 }
+
+#[test]
+fn logical_operators() {
+    run_test_file(Path::new("./samples/logical_operators.hyp"));
+}

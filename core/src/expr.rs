@@ -37,6 +37,9 @@ pub enum BinOp {
     Gt,
     Gte,
     Lte,
+    And,
+    Or,
+    Xor,
 }
 
 #[derive(Clone, Debug, PartialEq)]

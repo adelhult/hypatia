@@ -430,21 +430,22 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
         }
         Expr::Program(expressions) => eval_block(expressions, env),
         Expr::BinOp(op, a, b) => {
-            let a = eval(a, env)?;
-            let b = eval(b, env)?;
-
             use BinOp::*;
+
             Ok(match op {
-                Add => Value::Quantity((a.quantity()? + b.quantity()?)?),
-                Sub => Value::Quantity((a.quantity()? - b.quantity()?)?),
-                Div => Value::Quantity(a.quantity()? / b.quantity()?),
-                Mul => Value::Quantity(a.quantity()? * b.quantity()?),
-                Equal => Value::Bool(a == b),
-                NotEqual => Value::Bool(a != b),
-                Lt => Value::Bool(a.quantity()? < b.quantity()?),
-                Gt => Value::Bool(a.quantity()? > b.quantity()?),
-                Gte => Value::Bool(a.quantity()? >= b.quantity()?),
-                Lte => Value::Bool(a.quantity()? <= b.quantity()?),
+                Add => Value::Quantity((eval(a, env)?.quantity()? + eval(b, env)?.quantity()?)?),
+                Sub => Value::Quantity((eval(a, env)?.quantity()? - eval(b, env)?.quantity()?)?),
+                Div => Value::Quantity(eval(a, env)?.quantity()? / eval(b, env)?.quantity()?),
+                Mul => Value::Quantity(eval(a, env)?.quantity()? * eval(b, env)?.quantity()?),
+                Equal => Value::Bool(eval(a, env)? == eval(b, env)?),
+                NotEqual => Value::Bool(eval(a, env)? != eval(b, env)?),
+                Lt => Value::Bool(eval(a, env)?.quantity()? < eval(b, env)?.quantity()?),
+                Gt => Value::Bool(eval(a, env)?.quantity()? > eval(b, env)?.quantity()?),
+                Gte => Value::Bool(eval(a, env)?.quantity()? >= eval(b, env)?.quantity()?),
+                Lte => Value::Bool(eval(a, env)?.quantity()? <= eval(b, env)?.quantity()?),
+                And => Value::Bool(eval(a, env)?.is_true()? && eval(b, env)?.is_true()?),
+                Or => Value::Bool(eval(a, env)?.is_true()? || eval(b, env)?.is_true()?),
+                Xor => Value::Bool(eval(a, env)?.is_true()? ^ eval(b, env)?.is_true()?),
             })
         }
         Expr::BaseUnitDecl(long_name, short_name) => {
