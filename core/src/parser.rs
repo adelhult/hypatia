@@ -76,6 +76,7 @@ enum Token {
     Comment,
     Prefix,
     Not,
+    In,
 }
 
 impl fmt::Display for Token {
@@ -121,6 +122,7 @@ impl fmt::Display for Token {
             Token::Comment => write!(f, ""),
             Token::Not => write!(f, "not"),
             Token::Prefix => write!(f, "prefix"),
+            Token::In => write!(f, "in"),
         }
     }
 }
@@ -191,7 +193,6 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
     }
     .or(text::newline().to(Token::Newline));
 
-    // TODO: support more then just c idents
     let keywords_and_idents = ident().map(|v| match String::from_iter(v).as_str() {
         "unit" => Token::Unit,
         "not" => Token::Not,
@@ -202,6 +203,7 @@ fn lexer() -> impl Parser<char, Vec<Spanned<Token>>, Error = Simple<char>> {
         "true" => Token::Bool(true),
         "false" => Token::Bool(false),
         "nothing" => Token::Nothing,
+        "in" => Token::In,
         s => Token::Ident(s.into()),
     });
 
@@ -401,12 +403,20 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             .or(just(Token::Sub).to(BinOp::Sub));
         let sum = product
             .clone()
-            .then(op.then(product).repeated())
+            .then(op.then(product.clone()).repeated())
             .foldl(|a, (operator, b)| {
                 let span = a.1.start..b.1.end;
                 (Expr::BinOp(operator, Box::new(a), Box::new(b)), span)
             });
+
         // FIXME: unary operators and comparison
+
+        // 20 m + 3 km in miles
+        let conversion = sum
+            .clone()
+            .then_ignore(just(Token::In))
+            .then(product)
+            .map_with_span(|(e, unit), span| (Expr::Conversion(Box::new(e), Box::new(unit)), span));
 
         // multiple expressions separated by line breaks or ";".
         let expressions = expr
@@ -444,7 +454,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
                 })
         });
 
-        block.or(if_).or(sum)
+        block.or(if_).or(conversion).or(sum)
     });
 
     expr.clone()

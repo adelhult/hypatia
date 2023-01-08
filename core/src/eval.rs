@@ -457,6 +457,43 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 UnaryOp::Not => Ok(Value::Bool(!value.boolean()?)),
             }
         }
+        // Convert a quantity into another unit
+        // For example "13.5 miles in meter".
+        Expr::Conversion(expr, unit_expr) => {
+            // The value must be a quantity for us to be able to convert the unit
+            let Value::Quantity(quantity) = eval(expr, env)? else {
+                return Err(Error::InvalidType);
+            };
+
+            // Let us also evaluate the unit expression as a quantity and extract the unit.
+            let Value::Quantity(Quantity { number, unit: Unit(scale, base_units) } ) = eval(unit_expr, env)? else {
+                return Err(Error::InvalidType);
+            };
+
+            // We don't currently support conversions like
+            // "1337 km in 20 meter" so let's assert that the number is 1.
+            if number != Number::one() {
+                return Err(Error::InvalidType);
+            }
+
+            // Assert that both the expression and the wanted unit have the same dimensions
+            // This will give a type error if you attempt things like "20 meter in seconds"
+            let Quantity {
+                number: original_number,
+                unit: Unit(original_scale, original_base_units),
+            } = quantity;
+
+            if original_base_units != base_units {
+                return Err(Error::InvalidType);
+            }
+
+            // Now, we can finally conver the the given quantity into the correct
+            // unit scale and return
+            Ok(Value::Quantity(Quantity {
+                number: original_number * (original_scale / scale.clone()),
+                unit: Unit(scale, base_units),
+            }))
+        }
     }
 }
 
@@ -489,7 +526,6 @@ pub fn format_unit(quantity: Quantity, env: &Environment) -> (Quantity, (String,
     match unit_name {
         Some(names @ (ref long_name, _)) => {
             let Unit(target_scale, _) = env.get_unit(&long_name).unwrap();
-
 
             // Now, we might need to rescale the original quantity to fit we the unit
             // that we have selected.

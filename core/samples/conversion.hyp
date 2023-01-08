@@ -1,0 +1,5 @@
+unit TwoMeter = 2 meter
+20 meter in TwoMeter
+
+// Result:
+10 TwoMeter

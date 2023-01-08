@@ -9,6 +9,7 @@ pub enum Expr {
     If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
     Block(Vec<Spanned<Self>>),
     Program(Vec<Spanned<Self>>),
+    Conversion(Box<Spanned<Self>>, Box<Spanned<Self>>),
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
     FunctionDecl(String, Vec<String>, Box<Spanned<Self>>),
     FunctionUpdate(String, Vec<String>, Box<Spanned<Self>>),
