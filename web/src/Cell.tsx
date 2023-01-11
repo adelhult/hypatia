@@ -77,7 +77,8 @@ const FormatButton = styled.button`
 `;
 
 const Editor = styled.div`
-  border: solid 2px #D6D6D6;
+  border: solid 2px #f4f4f4;
+  border-top: none;
 `;
 
 const hotkeys = (addCellAction: () => void) =>

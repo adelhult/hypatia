@@ -36,8 +36,24 @@ const Container = styled.div`
 
 const Actions = styled.div`
   display: flex;
-  max-width: 150px;
+  justify-content: flex-end;
   width: 100%;
+`;
+
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Logo = styled.img`
+    width: 6rem;
+    margin-right: 0.5rem;
+`;
+
+const LogoText = styled.div`
+    font-size: 1.6rem;
+    font-weight: normal;
 `;
 
 function App() {
@@ -97,6 +113,13 @@ function App() {
       <Container>
         <div style={{ width: "100%" }}>
           <Menu helpOpen={state.helpOpen} toggleHelp={() => toggleHelp(dispatch)} />
+          <LogoContainer>
+            <Logo src="logo.png"></Logo>
+            <LogoText>
+              <strong>Hypatia</strong>
+              <br />Calculator
+            </LogoText>
+          </LogoContainer>
           {state.loaded && (
             <Workspace>
               {state.cells.map((cell, index) => (
