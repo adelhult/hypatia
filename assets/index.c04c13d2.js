@@ -8953,6 +8953,34 @@ function FaGithub(props) {
 function FaBook(props) {
   return GenIcon({ "tag": "svg", "attr": { "viewBox": "0 0 448 512" }, "child": [{ "tag": "path", "attr": { "d": "M448 360V24c0-13.3-10.7-24-24-24H96C43 0 0 43 0 96v320c0 53 43 96 96 96h328c13.3 0 24-10.7 24-24v-16c0-7.5-3.5-14.3-8.9-18.7-4.2-15.4-4.2-59.3 0-74.7 5.4-4.3 8.9-11.1 8.9-18.6zM128 134c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm0 64c0-3.3 2.7-6 6-6h212c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H134c-3.3 0-6-2.7-6-6v-20zm253.4 250H96c-17.7 0-32-14.3-32-32 0-17.6 14.4-32 32-32h285.4c-1.9 17.1-1.9 46.9 0 64z" } }] })(props);
 }
+const ButtonEl = styled.button`
+  border: none;
+  border-radius: 0.3rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1rem;
+  background: ${(props) => props.active ? "#bcc0c3" : "dbdfe2"};
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #bcc0c3;
+}
+`;
+function Button({
+  title,
+  icon,
+  onClick,
+  active
+}) {
+  return /* @__PURE__ */ jsxs(ButtonEl, {
+    active: active != null ? active : false,
+    onClick,
+    children: [title, " ", icon != null ? icon : ""]
+  });
+}
 const Container$2 = styled.div`
     display: flex;
     width: 100%;
@@ -8976,19 +9004,10 @@ const LogoText = styled.h1`
 const Buttons = styled.div`
   display: flex;
   gap: 1rem;
-
-  &>button {
-  border: solid 2px black;
-  border-radius: 0.2rem;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.9rem;
-}
 `;
 function Menu({
-  toggleHelp: toggleHelp2
+  toggleHelp: toggleHelp2,
+  helpOpen
 }) {
   return /* @__PURE__ */ jsxs(Container$2, {
     className: "Menu",
@@ -9001,12 +9020,15 @@ function Menu({
         }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
       })]
     }), /* @__PURE__ */ jsxs(Buttons, {
-      children: [/* @__PURE__ */ jsxs("button", {
+      children: [/* @__PURE__ */ jsx(Button, {
         onClick: () => location.href = "https://github.com/adelhult/hypatia",
-        children: ["Github ", /* @__PURE__ */ jsx(FaGithub, {})]
-      }), /* @__PURE__ */ jsxs("button", {
+        title: "Github",
+        icon: /* @__PURE__ */ jsx(FaGithub, {})
+      }), /* @__PURE__ */ jsx(Button, {
         onClick: toggleHelp2,
-        children: ["Help ", /* @__PURE__ */ jsx(FaBook, {})]
+        active: helpOpen,
+        title: "Help",
+        icon: /* @__PURE__ */ jsx(FaBook, {})
       })]
     })]
   });
@@ -37806,7 +37828,7 @@ const Remove = styled.button`
         opacity: 1;
     }
 `;
-const Action$1 = styled.button`
+const Action = styled.button`
     background: none;
     border: none;
     text-decoration: underline;
@@ -37851,7 +37873,7 @@ function Prompt(props) {
         children: [props.title && /* @__PURE__ */ jsx("strong", {
           children: props.title
         }), " ", props.children]
-      }), /* @__PURE__ */ jsx(Action$1, {
+      }), /* @__PURE__ */ jsx(Action, {
         onClick: props.handleAction,
         children: props.action
       })]
@@ -37860,12 +37882,12 @@ function Prompt(props) {
 }
 const Container$1 = styled(motion.div)`
   height: 100vh;
-  padding: 1rem;
+  padding: 2rem;
   flex-grow: 0;
   font-weight: 300;
-  max-width: 25rem;
-  border-left: solid 4px black;
+  max-width: 37rem;
   overflow-y: auto;
+  background: #e9e6e2;
   box-sizing: border-box;
   &>h1 {
     font-size: 1.5rem;
@@ -37875,6 +37897,7 @@ const Container$1 = styled(motion.div)`
     font-size: 1.2rem;
     line-height: 1;
     margin-bottom:0.2rem;
+    margin-top: 2rem;
    }
 `;
 function Example({
@@ -37908,7 +37931,7 @@ function Help({
         width: 0
       },
       children: [/* @__PURE__ */ jsx("h1", {
-        children: "Help"
+        children: "How to use"
       }), /* @__PURE__ */ jsx("h2", {
         children: "It's a calculator!"
       }), "Evaluate mathematical expressions", /* @__PURE__ */ jsx(Example, {
@@ -37972,7 +37995,7 @@ fibbonaci(n) = if n <= 1 {
 unit dollar usd = 10 kr
 10 usd + 50 kr`
       }), /* @__PURE__ */ jsx("h2", {
-        children: "Costum prefixes"
+        children: "Custom prefixes"
       }), /* @__PURE__ */ jsx(Example, {
         value: `prefix super = 10000000
 15 supergram`
@@ -38416,21 +38439,6 @@ const Actions = styled.div`
   max-width: 150px;
   width: 100%;
 `;
-const Action = styled.button`
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-sizing: border-box;
-  padding: 0.5rem;
-  width: 100%;
-  margin-top: 0.5rem;
-  margin-right: 0.5rem;
-  border: none;
-  border-radius: 0.2rem;
-  background: #F0C808;
-  border: solid 2px black;
-`;
 function App() {
   var _a2, _b;
   const [state, dispatch] = react.exports.useReducer(reducer, {
@@ -38484,6 +38492,7 @@ function App() {
           width: "100%"
         },
         children: [/* @__PURE__ */ jsx(Menu, {
+          helpOpen: state.helpOpen,
           toggleHelp: () => toggleHelp(dispatch)
         }), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
           children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
@@ -38496,11 +38505,10 @@ function App() {
             addCellAction: () => addCell(state, dispatch),
             index: index2
           }, index2)), /* @__PURE__ */ jsx(Actions, {
-            children: /* @__PURE__ */ jsxs(Action, {
+            children: /* @__PURE__ */ jsx(Button, {
               onClick: () => addCell(state, dispatch),
-              children: ["New Cell ", /* @__PURE__ */ jsx(MdAddCircleOutline, {
-                size: "1.2rem"
-              })]
+              title: "Add cell",
+              icon: /* @__PURE__ */ jsx(MdAddCircleOutline, {})
             })
           })]
         })]
