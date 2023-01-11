@@ -1,15 +1,15 @@
 import styled from "styled-components";
-import { AnimatePresence, filterProps, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import CodeMirror from "@uiw/react-codemirror";
 
 const Container = styled(motion.div)`
   height: 100vh;
-  padding: 1rem;
+  padding: 2rem;
   flex-grow: 0;
   font-weight: 300;
-  max-width: 25rem;
-  border-left: solid 4px black;
+  max-width: 37rem;
   overflow-y: auto;
+  background: #e9e6e2;
   box-sizing: border-box;
   &>h1 {
     font-size: 1.5rem;
@@ -19,6 +19,7 @@ const Container = styled(motion.div)`
     font-size: 1.2rem;
     line-height: 1;
     margin-bottom:0.2rem;
+    margin-top: 2rem;
    }
 `;
 
@@ -52,7 +53,7 @@ export default function Help({ show }: HelpProps) {
             animate={{ width: "100%" }}
             exit={{ width: 0 }}
           >
-            <h1>Help</h1>
+            <h1>How to use</h1>
             <h2>It's a calculator!</h2>
             Evaluate mathematical expressions
             <Example
@@ -125,7 +126,7 @@ fibbonaci(n) = if n <= 1 {
 unit dollar usd = 10 kr
 10 usd + 50 kr`}
             />
-            <h2>Costum prefixes</h2>
+            <h2>Custom prefixes</h2>
             <Example
               value={`prefix super = 10000000
 15 supergram`}

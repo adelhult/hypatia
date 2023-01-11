@@ -1,5 +1,7 @@
 import styled from "styled-components";
 import { FaBook, FaGithub } from "react-icons/fa";
+import Button from "./Button";
+
 const Container = styled.div`
     display: flex;
     width: 100%;
@@ -27,23 +29,14 @@ const LogoText = styled.h1`
 const Buttons = styled.div`
   display: flex;
   gap: 1rem;
-
-  &>button {
-  border: solid 2px black;
-  border-radius: 0.2rem;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.9rem;
-}
 `;
 
 type MenuProps = {
   toggleHelp: () => void;
+  helpOpen: boolean;
 };
 
-export default function Menu({ toggleHelp }: MenuProps) {
+export default function Menu({ toggleHelp, helpOpen }: MenuProps) {
   return (
     <Container className="Menu">
       <LogoContainer>
@@ -54,14 +47,17 @@ export default function Menu({ toggleHelp }: MenuProps) {
         </LogoText>
       </LogoContainer>
       <Buttons>
-        <button
+        <Button
           onClick={() => location.href = "https://github.com/adelhult/hypatia"}
-        >
-          Github <FaGithub />
-        </button>
-        <button onClick={toggleHelp}>
-          Help <FaBook />
-        </button>
+          title="Github"
+          icon={<FaGithub />}
+        />
+        <Button
+          onClick={toggleHelp}
+          active={helpOpen}
+          title="Help"
+          icon={<FaBook />}
+        />
       </Buttons>
     </Container>
   );

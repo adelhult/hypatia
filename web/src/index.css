@@ -15,11 +15,12 @@ body {
 }
 
 .cm-editor .cm-content {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
 }
 
-input, button {
+input,
+button {
   font-weight: 500;
   font-family: 'Rubik', sans-serif;
 }

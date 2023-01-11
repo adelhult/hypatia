@@ -2,6 +2,7 @@ import Menu from "./Menu";
 import Cell from "./Cell";
 import Prompt from "./Prompt";
 import Help from "./Help";
+import Button from "./Button";
 import styled from "styled-components";
 import {
   addCell,
@@ -37,22 +38,6 @@ const Actions = styled.div`
   display: flex;
   max-width: 150px;
   width: 100%;
-`;
-
-const Action = styled.button`
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-sizing: border-box;
-  padding: 0.5rem;
-  width: 100%;
-  margin-top: 0.5rem;
-  margin-right: 0.5rem;
-  border: none;
-  border-radius: 0.2rem;
-  background: #F0C808;
-  border: solid 2px black;
 `;
 
 function App() {
@@ -111,7 +96,7 @@ function App() {
       </Prompt>
       <Container>
         <div style={{ width: "100%" }}>
-          <Menu toggleHelp={() => toggleHelp(dispatch)} />
+          <Menu helpOpen={state.helpOpen} toggleHelp={() => toggleHelp(dispatch)} />
           {state.loaded && (
             <Workspace>
               {state.cells.map((cell, index) => (
@@ -128,9 +113,11 @@ function App() {
                 />
               ))}
               <Actions>
-                <Action onClick={() => addCell(state, dispatch)}>
-                  New Cell <MdAddCircleOutline size="1.2rem" />
-                </Action>
+                <Button
+                  onClick={() => addCell(state, dispatch)}
+                  title="Add cell"
+                  icon={<MdAddCircleOutline />}
+                />
               </Actions>
             </Workspace>
           )}

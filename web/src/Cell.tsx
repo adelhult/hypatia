@@ -180,7 +180,7 @@ const Cell = React.memo((props: CellProps) => {
           </Formats>
           <AnswerText>answer({props.index}) =</AnswerText>
           <Time>{props.time ?? ""}</Time>
-          <pre><ResultData dangerouslySetInnerHTML={{__html: converter.toHtml(outputValue)}}/>
+          <pre><ResultData dangerouslySetInnerHTML={{ __html: converter.toHtml(outputValue) }} />
           </pre>
         </Result>
       )}
