@@ -8986,20 +8986,8 @@ const Container$2 = styled.div`
     width: 100%;
     box-sizing: border-box;
     padding: 1rem;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;  
-`;
-const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;  
-`;
-const Logo = styled.img`
-    width: 6rem;
-    margin-right: 0.5rem;
-`;
-const LogoText = styled.h1`
-    font-size: 1.6rem;
-    font-weight: normal;
 `;
 const Buttons = styled.div`
   display: flex;
@@ -9009,17 +8997,9 @@ function Menu({
   toggleHelp: toggleHelp2,
   helpOpen
 }) {
-  return /* @__PURE__ */ jsxs(Container$2, {
+  return /* @__PURE__ */ jsx(Container$2, {
     className: "Menu",
-    children: [/* @__PURE__ */ jsxs(LogoContainer, {
-      children: [/* @__PURE__ */ jsx(Logo, {
-        src: "logo.png"
-      }), /* @__PURE__ */ jsxs(LogoText, {
-        children: [/* @__PURE__ */ jsx("strong", {
-          children: "Hypatia"
-        }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
-      })]
-    }), /* @__PURE__ */ jsxs(Buttons, {
+    children: /* @__PURE__ */ jsxs(Buttons, {
       children: [/* @__PURE__ */ jsx(Button, {
         onClick: () => location.href = "https://github.com/adelhult/hypatia",
         title: "Github",
@@ -9030,7 +9010,7 @@ function Menu({
         title: "Help",
         icon: /* @__PURE__ */ jsx(FaBook, {})
       })]
-    })]
+    })
   });
 }
 class Text {
@@ -37698,7 +37678,8 @@ const FormatButton = styled.button`
     transition: all 0.3s;
 `;
 const Editor = styled.div`
-  border: solid 2px #D6D6D6;
+  border: solid 2px #f4f4f4;
+  border-top: none;
 `;
 const hotkeys = (addCellAction) => keymap.of([{
   key: "Alt-Enter",
@@ -38436,8 +38417,21 @@ const Container = styled.div`
 `;
 const Actions = styled.div`
   display: flex;
-  max-width: 150px;
+  justify-content: flex-end;
   width: 100%;
+`;
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const Logo = styled.img`
+    width: 6rem;
+    margin-right: 0.5rem;
+`;
+const LogoText = styled.div`
+    font-size: 1.6rem;
+    font-weight: normal;
 `;
 function App() {
   var _a2, _b;
@@ -38494,6 +38488,14 @@ function App() {
         children: [/* @__PURE__ */ jsx(Menu, {
           helpOpen: state.helpOpen,
           toggleHelp: () => toggleHelp(dispatch)
+        }), /* @__PURE__ */ jsxs(LogoContainer, {
+          children: [/* @__PURE__ */ jsx(Logo, {
+            src: "logo.png"
+          }), /* @__PURE__ */ jsxs(LogoText, {
+            children: [/* @__PURE__ */ jsx("strong", {
+              children: "Hypatia"
+            }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
+          })]
         }), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
           children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
             noAnimation: index2 == 0,
