@@ -3,6 +3,7 @@ import Cell from "./Cell";
 import Prompt from "./Prompt";
 import Help from "./Help";
 import Button from "./Button";
+import Logo from "./Logo";
 import styled from "styled-components";
 import {
   addCell,
@@ -40,21 +41,7 @@ const Actions = styled.div`
   width: 100%;
 `;
 
-const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
 
-const Logo = styled.img`
-    width: 6rem;
-    margin-right: 0.5rem;
-`;
-
-const LogoText = styled.div`
-    font-size: 1.6rem;
-    font-weight: normal;
-`;
 
 function App() {
   const [state, dispatch] = useReducer(
@@ -113,13 +100,7 @@ function App() {
       <Container>
         <div style={{ width: "100%" }}>
           <Menu helpOpen={state.helpOpen} toggleHelp={() => toggleHelp(dispatch)} />
-          <LogoContainer>
-            <Logo src="logo.png"></Logo>
-            <LogoText>
-              <strong>Hypatia</strong>
-              <br />Calculator
-            </LogoText>
-          </LogoContainer>
+          <Logo />
           {state.loaded && (
             <Workspace>
               {state.cells.map((cell, index) => (
