@@ -37877,21 +37877,48 @@ const Container$1 = styled(motion.div)`
   &>h2 {
     font-size: 1.2rem;
     line-height: 1;
-    margin-bottom:0.2rem;
+    margin-bottom:0.3rem;
     margin-top: 2rem;
+    opacity: 0.5;
    }
+
+   &>h3 {
+    font-size: 1rem;
+    font-weight: normal;
+   }
+
+  & code {
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #00000010;
+    padding: 0.1rem;
+    border-radius: 0.3rem;
+  }
+
+  & ul {
+    padding-left: 1rem;
+    box-sizing: border-box;
+  }
+
+  & li {
+    margin-bottom: 0.5rem;
+  }
+`;
+const ExampleBlock = styled.div`
+  margin-top: 0.3rem;
 `;
 function Example({
   value
 }) {
-  return /* @__PURE__ */ jsx(ReactCodeMirror, {
-    readOnly: true,
-    value,
-    basicSetup: {
-      highlightActiveLineGutter: false,
-      lineNumbers: false,
-      highlightActiveLine: false
-    }
+  return /* @__PURE__ */ jsx(ExampleBlock, {
+    children: /* @__PURE__ */ jsx(ReactCodeMirror, {
+      readOnly: true,
+      value,
+      basicSetup: {
+        highlightActiveLineGutter: false,
+        lineNumbers: false,
+        highlightActiveLine: false
+      }
+    })
   });
 }
 function Help({
@@ -37913,30 +37940,38 @@ function Help({
       },
       children: [/* @__PURE__ */ jsx("h1", {
         children: "How to use"
-      }), /* @__PURE__ */ jsx("h2", {
-        children: "It's a calculator!"
-      }), "Evaluate mathematical expressions", /* @__PURE__ */ jsx(Example, {
+      }), /* @__PURE__ */ jsx("p", {
+        children: "Welcome! Hypatia is a calculator language that's well suited for dealing with large numbers and unit conversions."
+      }), /* @__PURE__ */ jsx("p", {
+        children: "It's easy to get started, just type out any mathematical expression and it will get evaluated. Here are a few examples:"
+      }), /* @__PURE__ */ jsx(Example, {
         value: `10 + 20
 2 km / 3
 sin(20 degrees) * 3`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Convert units"
-      }), "The `->` keyword can be used to convert between compatible units", /* @__PURE__ */ jsx(Example, {
-        value: `2 km + 3 mile -> meter`
+      }), "To display the result of an expression in another compatible unit, simply use the ", /* @__PURE__ */ jsx("code", {
+        children: "in"
+      }), " keyword.", /* @__PURE__ */ jsx(Example, {
+        value: `2 km + 3 mile in meter`
+      }), /* @__PURE__ */ jsx("h2", {
+        children: "Variables"
+      }), "Declare variables with the ", /* @__PURE__ */ jsx("code", {
+        children: "="
+      }), " operator. Use the ", /* @__PURE__ */ jsx("code", {
+        children: "update"
+      }), " keyword if you later wan't to reassign a new value to the same name.", /* @__PURE__ */ jsx(Example, {
+        value: `width = 20 m
+height = 30 m
+update height = 35 m
+              
+area = width * height`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Literals"
       }), "Binary, hexadecimal and scientific literals are supported", /* @__PURE__ */ jsx(Example, {
         value: `0xa2a3
 0b101010
 3e-2`
-      }), /* @__PURE__ */ jsx("h2", {
-        children: "Variables"
-      }), "Declare variables with the `=` operator. Use the `update` keyword to reassign a new value to the same name.", /* @__PURE__ */ jsx(Example, {
-        value: `width = 20 m
-height = 30 m
-update height = 35 m
-              
-area = width * height`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Block expressions"
       }), "A pair of curly braces are used to create a block and a new variable scope. Variables declared inside of the block exits only within that block. The last expression in the block is what the block itself evaluates to.", /* @__PURE__ */ jsx(Example, {
@@ -37948,20 +37983,20 @@ area = width * height`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Conditional expressions"
       }), /* @__PURE__ */ jsx(Example, {
-        value: `if true {
+        value: `if x < 100 m {
 // ...
 } else {
   // ...
 }
               
-if true {
+if x > 3 km {
   // ...
-} else if true {
+} else if x == 100 m {
   // ...
 }`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Functions"
-      }), /* @__PURE__ */ jsx(Example, {
+      }), "See the example for how to use functions.", /* @__PURE__ */ jsx(Example, {
         value: `f(x) = 2 * x + 5
 
 fibbonaci(n) = if n <= 1 {
@@ -37971,19 +38006,123 @@ fibbonaci(n) = if n <= 1 {
 }`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Custom units"
-      }), /* @__PURE__ */ jsx(Example, {
+      }), "You can easily use custom units. Use the ", /* @__PURE__ */ jsx("code", {
+        children: "unit"
+      }), " keyword followed by a name (and an optional shorthand name) to declare a unit.", /* @__PURE__ */ jsx(Example, {
         value: `unit kronor kr
 unit dollar usd = 10 kr
 10 usd + 50 kr`
       }), /* @__PURE__ */ jsx("h2", {
         children: "Custom prefixes"
-      }), /* @__PURE__ */ jsx(Example, {
+      }), "Declare a custom unit prefix using the ", /* @__PURE__ */ jsx("code", {
+        children: "prefix"
+      }), " keyword followed by an equals sign and a numeric value.", /* @__PURE__ */ jsx(Example, {
         value: `prefix super = 10000000
 15 supergram`
       }), /* @__PURE__ */ jsx("h1", {
         children: "Language reference"
-      }), /* @__PURE__ */ jsx("h2", {
+      }), "Work in progress. Will write this once more of the language is completed.", /* @__PURE__ */ jsx("h2", {
         children: "Keywords and operators"
+      }), /* @__PURE__ */ jsx("h3", {
+        children: "General keywords"
+      }), /* @__PURE__ */ jsxs("ul", {
+        children: [/* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "if"
+          })
+        }), /* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "else"
+          })
+        }), /* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "update"
+          })
+        }), /* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "in"
+          })
+        }), /* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "unit"
+          })
+        }), /* @__PURE__ */ jsx("li", {
+          children: /* @__PURE__ */ jsx("code", {
+            children: "prefix"
+          })
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "="
+          }), " (assignment)"]
+        })]
+      }), /* @__PURE__ */ jsx("h3", {
+        children: "Arithmetic operators"
+      }), /* @__PURE__ */ jsxs("ul", {
+        children: [/* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "+"
+          }), " (add)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "-"
+          }), " (subtract or negate)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "/"
+          }), " (divide)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "*"
+          }), " (multiply)"]
+        })]
+      }), /* @__PURE__ */ jsx("h3", {
+        children: "Relational operators"
+      }), /* @__PURE__ */ jsxs("ul", {
+        children: [/* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "<"
+          }), " (less)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "<="
+          }), " (less than or equal)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: ">"
+          }), " (greater than)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: ">="
+          }), " (greater than or equal)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "=="
+          }), " (equals)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "!="
+          }), " (not equal)"]
+        })]
+      }), /* @__PURE__ */ jsx("h3", {
+        children: "Logical operators"
+      }), /* @__PURE__ */ jsxs("ul", {
+        children: [/* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "and"
+          }), " (logical and)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "or"
+          }), " (logical or)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "xor"
+          }), " (logical exlusive or)"]
+        }), /* @__PURE__ */ jsxs("li", {
+          children: [/* @__PURE__ */ jsx("code", {
+            children: "not"
+          }), " (logical not)"]
+        })]
       }), /* @__PURE__ */ jsx("h2", {
         children: "Built-in functions"
       }), /* @__PURE__ */ jsx("h2", {
@@ -37992,6 +38131,30 @@ unit dollar usd = 10 kr
         children: "Built-in prefixes"
       })]
     }) : ""
+  });
+}
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const Image = styled.img`
+    width: 6rem;
+    margin-right: 0.5rem;
+`;
+const LogoText = styled.div`
+    font-size: 1.6rem;
+    font-weight: normal;
+`;
+function Logo() {
+  return /* @__PURE__ */ jsxs(LogoContainer, {
+    children: [/* @__PURE__ */ jsx(Image, {
+      src: "logo.png"
+    }), /* @__PURE__ */ jsxs(LogoText, {
+      children: [/* @__PURE__ */ jsx("strong", {
+        children: "Hypatia"
+      }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
+    })]
   });
 }
 let wasm;
@@ -38420,19 +38583,6 @@ const Actions = styled.div`
   justify-content: flex-end;
   width: 100%;
 `;
-const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-const Logo = styled.img`
-    width: 6rem;
-    margin-right: 0.5rem;
-`;
-const LogoText = styled.div`
-    font-size: 1.6rem;
-    font-weight: normal;
-`;
 function App() {
   var _a2, _b;
   const [state, dispatch] = react.exports.useReducer(reducer, {
@@ -38488,15 +38638,7 @@ function App() {
         children: [/* @__PURE__ */ jsx(Menu, {
           helpOpen: state.helpOpen,
           toggleHelp: () => toggleHelp(dispatch)
-        }), /* @__PURE__ */ jsxs(LogoContainer, {
-          children: [/* @__PURE__ */ jsx(Logo, {
-            src: "logo.png"
-          }), /* @__PURE__ */ jsxs(LogoText, {
-            children: [/* @__PURE__ */ jsx("strong", {
-              children: "Hypatia"
-            }), /* @__PURE__ */ jsx("br", {}), "Calculator"]
-          })]
-        }), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
+        }), /* @__PURE__ */ jsx(Logo, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
           children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
             noAnimation: index2 == 0,
             code: cell.code,
