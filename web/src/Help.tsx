@@ -94,7 +94,7 @@ sin(20 degrees) * 3`}
               value={`2 km + 3 mile in meter`}
             />
             <h2>Variables</h2>
-            Declare variables with the <code>=</code> operator. Use the <code>update</code> keyword if you later wan't to
+            Declare variables with the <code>=</code> operator. Use the <code>update</code> keyword if you later want to
             reassign a new value to the same name.
             <Example
               value={`width = 20 m
