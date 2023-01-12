@@ -18,8 +18,8 @@ const LogoText = styled.div`
     font-weight: normal;
 `;
 
-export default function Logo({ className }: { className: string }) {
-    return <LogoContainer className={className}>
+export default function Logo() {
+    return <LogoContainer>
         <Image src="logo.png" />
         <LogoText>
             <strong>Hypatia</strong>
