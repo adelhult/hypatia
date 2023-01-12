@@ -4,6 +4,8 @@ const LogoContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 4rem;
+  margin-bottom: 1rem;
 `;
 
 const Image = styled.img`

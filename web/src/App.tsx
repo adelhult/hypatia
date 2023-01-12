@@ -58,12 +58,6 @@ const Actions = styled.div`
   width: 100%;
 `;
 
-const BigLogo = styled(Logo)`
-  margin-top: 4rem;
-  margin-bottom: 1rem;
-`;
-
-
 function App() {
   const [state, dispatch] = useReducer(
     reducer,
@@ -128,7 +122,7 @@ function App() {
         {state.loaded && (
           <Workspace>
             <Center>
-              <BigLogo />
+              <Logo />
               {state.cells.map((cell, index) => (
                 <Cell
                   key={index}
