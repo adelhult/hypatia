@@ -5,12 +5,14 @@ import CodeMirror from "@uiw/react-codemirror";
 const Container = styled(motion.div)`
   height: 100vh;
   padding: 2rem;
-  flex-grow: 0;
   font-weight: 300;
-  max-width: 37rem;
+  flex-grow:0;
+  flex-shrink:1;
+  width: 100%;
   overflow-y: auto;
   background: #e9e6e2;
   box-sizing: border-box;
+
   &>h1 {
     font-size: 1.5rem;
    }
@@ -43,6 +45,11 @@ const Container = styled(motion.div)`
   & li {
     margin-bottom: 0.5rem;
   }
+
+  @media (max-width: 800px) {
+    height: auto;
+    max-width: 100%;
+  }
 `;
 
 const ExampleBlock = styled.div`
@@ -74,10 +81,6 @@ export default function Help({ show }: HelpProps) {
       {show
         ? (
           <Container
-            transition={{ easings: ["easeIn", "easeOut"] }}
-            initial={{ width: 0 }}
-            animate={{ width: "100%" }}
-            exit={{ width: 0 }}
           >
             <h1>How to use</h1>
             <p>Welcome! Hypatia is a calculator language that's well suited for dealing with large numbers and unit conversions.</p>
@@ -127,7 +130,7 @@ area = width * height`}
             <h2>Conditional expressions</h2>
             <Example
               value={`if x < 100 m {
-// ...
+  // ...
 } else {
   // ...
 }

@@ -20,19 +20,36 @@ import { MdAddCircleOutline } from "react-icons/md";
 import { useEffect, useReducer } from "react";
 
 const Workspace = styled.div`
+  box-sizing: border-box;
+  padding: 1rem;
+  overflow-y: auto;
+  height: 100vh;
+  flex-grow:0;
+  flex-shrink:1;
+  width: 100%;
+
+  @media (max-width: 800px) {
+    height: auto;
+  }
+`;
+
+const Center = styled.div`
   max-width: 700px;
   min-width: 380px;
   margin-left: auto;
   margin-right: auto;
-  box-sizing: border-box;
-  padding: 1rem;
-`;
+`
 
 const Container = styled.div`
   position: relative;
-  height: 100vh;
   display:flex;
   justify-content: space-between;
+  width: 100%;
+
+  @media (max-width: 800px) {
+    flex-direction: column-reverse;
+    height: auto;
+  }
 `;
 
 const Actions = styled.div`
@@ -41,6 +58,10 @@ const Actions = styled.div`
   width: 100%;
 `;
 
+const BigLogo = styled(Logo)`
+  margin-top: 4rem;
+  margin-bottom: 1rem;
+`;
 
 
 function App() {
@@ -86,23 +107,28 @@ function App() {
     );
   }, [state.cells, state.previousSession]);
 
+  const restoreSessionPrompt = <Prompt
+    title="Welcome back!"
+    show={!state.sessionRestored &&
+      (state.previousSession?.length ?? 0) > 0}
+    action="Restore session"
+    handleAction={() => recoverSession(state, dispatch)}
+  >
+    You have a previous session saved since last time.
+  </Prompt>;
+
   return (
     <div>
-      <Prompt
-        title="Welcome back!"
-        show={!state.sessionRestored &&
-          (state.previousSession?.length ?? 0) > 0}
-        action="Restore session"
-        handleAction={() => recoverSession(state, dispatch)}
-      >
-        You have a previous session saved since last time.
-      </Prompt>
+      <Menu
+        prompts={[restoreSessionPrompt]}
+        helpOpen={state.helpOpen}
+        toggleHelp={() => toggleHelp(dispatch)}
+      />
       <Container>
-        <div style={{ width: "100%" }}>
-          <Menu helpOpen={state.helpOpen} toggleHelp={() => toggleHelp(dispatch)} />
-          <Logo />
-          {state.loaded && (
-            <Workspace>
+        {state.loaded && (
+          <Workspace>
+            <Center>
+              <BigLogo />
               {state.cells.map((cell, index) => (
                 <Cell
                   key={index}
@@ -123,9 +149,9 @@ function App() {
                   icon={<MdAddCircleOutline />}
                 />
               </Actions>
-            </Workspace>
-          )}
-        </div>
+            </Center>
+          </Workspace>
+        )}
         <Help show={state.helpOpen} />
       </Container>
     </div>
