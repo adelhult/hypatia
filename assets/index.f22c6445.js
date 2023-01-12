@@ -8982,24 +8982,32 @@ function Button({
   });
 }
 const Container$2 = styled.div`
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 1rem;
-    justify-content: flex-end;
-    align-items: center;  
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width:100%;
 `;
+const Prompts = styled.div``;
 const Buttons = styled.div`
+  position: absolute;
+  width: 100%;
   display: flex;
+  justify-content: flex-end;
   gap: 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
 `;
 function Menu({
   toggleHelp: toggleHelp2,
-  helpOpen
+  helpOpen,
+  prompts
 }) {
-  return /* @__PURE__ */ jsx(Container$2, {
+  return /* @__PURE__ */ jsxs(Container$2, {
     className: "Menu",
-    children: /* @__PURE__ */ jsxs(Buttons, {
+    children: [/* @__PURE__ */ jsx(Prompts, {
+      children: prompts
+    }), /* @__PURE__ */ jsxs(Buttons, {
       children: [/* @__PURE__ */ jsx(Button, {
         onClick: () => location.href = "https://github.com/adelhult/hypatia",
         title: "Github",
@@ -9010,7 +9018,7 @@ function Menu({
         title: "Help",
         icon: /* @__PURE__ */ jsx(FaBook, {})
       })]
-    })
+    })]
   });
 }
 class Text {
@@ -37864,12 +37872,14 @@ function Prompt(props) {
 const Container$1 = styled(motion.div)`
   height: 100vh;
   padding: 2rem;
-  flex-grow: 0;
   font-weight: 300;
-  max-width: 37rem;
+  flex-grow:0;
+  flex-shrink:1;
+  width: 100%;
   overflow-y: auto;
   background: #e9e6e2;
   box-sizing: border-box;
+
   &>h1 {
     font-size: 1.5rem;
    }
@@ -37902,6 +37912,11 @@ const Container$1 = styled(motion.div)`
   & li {
     margin-bottom: 0.5rem;
   }
+
+  @media (max-width: 800px) {
+    height: auto;
+    max-width: 100%;
+  }
 `;
 const ExampleBlock = styled.div`
   margin-top: 0.3rem;
@@ -37926,18 +37941,6 @@ function Help({
 }) {
   return /* @__PURE__ */ jsx(AnimatePresence, {
     children: show ? /* @__PURE__ */ jsxs(Container$1, {
-      transition: {
-        easings: ["easeIn", "easeOut"]
-      },
-      initial: {
-        width: 0
-      },
-      animate: {
-        width: "100%"
-      },
-      exit: {
-        width: 0
-      },
       children: [/* @__PURE__ */ jsx("h1", {
         children: "How to use"
       }), /* @__PURE__ */ jsx("p", {
@@ -37960,7 +37963,7 @@ sin(20 degrees) * 3`
         children: "="
       }), " operator. Use the ", /* @__PURE__ */ jsx("code", {
         children: "update"
-      }), " keyword if you later wan't to reassign a new value to the same name.", /* @__PURE__ */ jsx(Example, {
+      }), " keyword if you later want to reassign a new value to the same name.", /* @__PURE__ */ jsx(Example, {
         value: `width = 20 m
 height = 30 m
 update height = 35 m
@@ -37984,7 +37987,7 @@ area = width * height`
         children: "Conditional expressions"
       }), /* @__PURE__ */ jsx(Example, {
         value: `if x < 100 m {
-// ...
+  // ...
 } else {
   // ...
 }
@@ -38137,6 +38140,8 @@ const LogoContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 4rem;
+  margin-bottom: 1rem;
 `;
 const Image = styled.img`
     width: 6rem;
@@ -38565,18 +38570,34 @@ function useWasm(dispatch) {
   }, []);
 }
 const Workspace = styled.div`
+  box-sizing: border-box;
+  padding: 1rem;
+  overflow-y: auto;
+  height: 100vh;
+  flex-grow:0;
+  flex-shrink:1;
+  width: 100%;
+
+  @media (max-width: 800px) {
+    height: auto;
+  }
+`;
+const Center = styled.div`
   max-width: 700px;
   min-width: 380px;
   margin-left: auto;
   margin-right: auto;
-  box-sizing: border-box;
-  padding: 1rem;
 `;
 const Container = styled.div`
   position: relative;
-  height: 100vh;
   display:flex;
   justify-content: space-between;
+  width: 100%;
+
+  @media (max-width: 800px) {
+    flex-direction: column-reverse;
+    height: auto;
+  }
 `;
 const Actions = styled.div`
   display: flex;
@@ -38623,23 +38644,22 @@ function App() {
       return;
     localStorage.setItem("cells", JSON.stringify(state.cells.map((cell) => cell.code)));
   }, [state.cells, state.previousSession]);
+  const restoreSessionPrompt = /* @__PURE__ */ jsx(Prompt, {
+    title: "Welcome back!",
+    show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
+    action: "Restore session",
+    handleAction: () => recoverSession(state, dispatch),
+    children: "You have a previous session saved since last time."
+  });
   return /* @__PURE__ */ jsxs("div", {
-    children: [/* @__PURE__ */ jsx(Prompt, {
-      title: "Welcome back!",
-      show: !state.sessionRestored && ((_b = (_a2 = state.previousSession) == null ? void 0 : _a2.length) != null ? _b : 0) > 0,
-      action: "Restore session",
-      handleAction: () => recoverSession(state, dispatch),
-      children: "You have a previous session saved since last time."
+    children: [/* @__PURE__ */ jsx(Menu, {
+      prompts: [restoreSessionPrompt],
+      helpOpen: state.helpOpen,
+      toggleHelp: () => toggleHelp(dispatch)
     }), /* @__PURE__ */ jsxs(Container, {
-      children: [/* @__PURE__ */ jsxs("div", {
-        style: {
-          width: "100%"
-        },
-        children: [/* @__PURE__ */ jsx(Menu, {
-          helpOpen: state.helpOpen,
-          toggleHelp: () => toggleHelp(dispatch)
-        }), /* @__PURE__ */ jsx(Logo, {}), state.loaded && /* @__PURE__ */ jsxs(Workspace, {
-          children: [state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
+      children: [state.loaded && /* @__PURE__ */ jsx(Workspace, {
+        children: /* @__PURE__ */ jsxs(Center, {
+          children: [/* @__PURE__ */ jsx(Logo, {}), state.cells.map((cell, index2) => /* @__PURE__ */ jsx(Cell, {
             noAnimation: index2 == 0,
             code: cell.code,
             output: cell.output,
@@ -38655,7 +38675,7 @@ function App() {
               icon: /* @__PURE__ */ jsx(MdAddCircleOutline, {})
             })
           })]
-        })]
+        })
       }), /* @__PURE__ */ jsx(Help, {
         show: state.helpOpen
       })]
