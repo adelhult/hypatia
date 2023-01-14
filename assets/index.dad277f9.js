@@ -38363,12 +38363,12 @@ function getImports() {
   imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
     takeObject(arg0);
   };
-  imports.wbg.__wbg_now_c2563c77371d3ec4 = function(arg0) {
-    const ret = getObject(arg0).now();
-    return ret;
-  };
   imports.wbg.__wbg_instanceof_Window_42f092928baaee84 = function(arg0) {
     const ret = getObject(arg0) instanceof Window;
+    return ret;
+  };
+  imports.wbg.__wbg_now_c2563c77371d3ec4 = function(arg0) {
+    const ret = getObject(arg0).now();
     return ret;
   };
   imports.wbg.__wbg_performance_6a3706d0a3ba1118 = function(arg0) {
@@ -38584,7 +38584,6 @@ const Workspace = styled.div`
 `;
 const Center = styled.div`
   max-width: 700px;
-  min-width: 380px;
   margin-left: auto;
   margin-right: auto;
 `;
