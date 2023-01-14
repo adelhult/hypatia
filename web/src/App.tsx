@@ -35,7 +35,6 @@ const Workspace = styled.div`
 
 const Center = styled.div`
   max-width: 700px;
-  min-width: 380px;
   margin-left: auto;
   margin-right: auto;
 `
