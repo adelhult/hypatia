@@ -203,6 +203,12 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
+        // Variables and functions with the name "_" are not bound to any name.
+        // This allows for anonymous functions like this "myFunc = _(x) = 20"
+        if name == "_" {
+            return Ok(());
+        }
+
         self.variables
             .lock()
             .unwrap()
