@@ -109,12 +109,14 @@ impl VariableScope {
         }
     }
 
-    fn get_var(&self, name: &str) -> Option<Value> {
-        self.table.get(name).cloned().or_else(|| {
-            self.outer
-                .as_ref()
-                .and_then(|outer| outer.lock().unwrap().get_var(name))
-        })
+    fn get_var(&self, name: &str, level: usize) -> Option<Value> {
+        if level == 0 {
+            return self.table.get(name).cloned();
+        }
+
+        self.outer
+            .as_ref()
+            .and_then(|outer| outer.lock().unwrap().get_var(name, level - 1))
     }
 
     fn declare_var(&mut self, name: &str, value: Value) -> Result<(), Error> {
@@ -167,7 +169,7 @@ impl Environment {
         self
     }
 
-    fn get_var(&self, name: &str) -> Result<Value, Error> {
+    fn get_var(&self, name: &str, scope_level: usize) -> Result<Value, Error> {
         if name == "_" {
             return Err(Error::ForbiddenName(name.into()));
         }
@@ -185,7 +187,7 @@ impl Environment {
         self.variables
             .lock()
             .unwrap()
-            .get_var(name)
+            .get_var(name, scope_level)
             .ok_or_else(|| Error::UnknownName(name.to_string()))
     }
 
@@ -372,7 +374,6 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
     match &expr {
         Expr::Error => Err(Error::ErrorNode),
         Expr::Literal(literal) => eval_literal(literal, env),
-        Expr::Variable(name) => env.get_var(name),
         Expr::VarDeclaration(name, rhs) => {
             let value = eval(rhs, env)?;
             env.declare_var(name, &value)?;
@@ -524,6 +525,8 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 unit: Unit(scale, base_units),
             }))
         }
+        Expr::ResolvedVariable(name, scope_level) => env.get_var(name, *scope_level),
+        Expr::Variable(_) => panic!("A resolved expression should not have any variable nodes"),
     }
 }
 

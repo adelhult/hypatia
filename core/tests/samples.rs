@@ -117,3 +117,8 @@ fn comparison() {
 fn logical_operators() {
     run_test_file(Path::new("./samples/logical_operators.hyp"));
 }
+
+#[test]
+fn lexical_scope() {
+    run_test_file(Path::new("./samples/lexical_scope.hyp"));
+}

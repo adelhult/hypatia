@@ -14,6 +14,8 @@ assert_eq!(value.to_string(), "42".to_string());
 mod error;
 mod eval;
 pub mod number;
+
+mod resolve;
 #[allow(dead_code)]
 mod trie;
 pub mod units;
@@ -24,5 +26,12 @@ pub use syntax::expr::{Expr, Spanned};
 use syntax::parser;
 
 pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
-    parser::parse(source).map_err(|errors| errors.into_iter().map(Error::Parsing).collect())
+    let expr = parser::parse(source).map_err(|errors| {
+        errors
+            .into_iter()
+            .map(Error::Parsing)
+            .collect::<Vec<Error>>()
+    })?;
+
+    resolve::resolve(expr).map_err(|error| vec![error])
 }

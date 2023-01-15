@@ -3,6 +3,7 @@ pub enum Expr {
     Error,
     Literal(Literal),
     Variable(String),
+    ResolvedVariable(String, usize),
     VarDeclaration(String, Box<Spanned<Self>>),
     VarUpdate(String, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
