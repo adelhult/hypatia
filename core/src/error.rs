@@ -1,6 +1,6 @@
 use ariadne::{Color, Fmt, Label, Report, ReportKind, Source};
-use chumsky::{error::SimpleReason, prelude::Simple};
 use std::io::Cursor;
+use syntax::{Simple, SimpleReason};
 
 #[derive(Debug, Clone)]
 pub enum Error {

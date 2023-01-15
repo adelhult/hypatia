@@ -2,7 +2,6 @@ use num::rational::Ratio;
 use std::sync::{Arc, Mutex};
 
 use crate::{
-    expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp},
     number::Number,
     parse,
     trie::StringTrie,
@@ -12,6 +11,7 @@ use crate::{
 use std::cmp;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
+use syntax::expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {

@@ -1,20 +1,18 @@
-use crate::expr::*;
-use crate::Error;
 use chumsky::{prelude::*, Stream};
+use crate::expr::*;
 use std::fmt;
 
 // Greatly inspired by the  Chumsky tutorial
 // and the Tao language implementation (https://github.com/zesterer/tao)
 
 /// Parse some source text into an abstract syntax tree of Expr nodes
-pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
+pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Simple<String>>> {
     let (tokens, lexing_errors) = lexer().parse_recovery(source);
 
     // Convert the lexing errors into the Hypatia errors
     let lexing_errors = lexing_errors
         .into_iter()
-        .map(|err| err.map(|c| c.to_string()))
-        .map(Error::Parsing);
+        .map(|err| err.map(|c| c.to_string()));
 
     // return the errors if we can't continue with parsing
     if tokens.is_none() {
@@ -32,7 +30,7 @@ pub fn parse(source: &str) -> Result<Spanned<Expr>, Vec<Error>> {
             .chain(
                 parsing_errors
                     .into_iter()
-                    .map(|err| Error::Parsing(err.map(|token| token.to_string()))),
+                    .map(|err| err.map(|token| token.to_string())),
             )
             .collect());
     }

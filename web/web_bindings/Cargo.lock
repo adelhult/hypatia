@@ -202,9 +202,9 @@ name = "hypatia_lib"
 version = "0.1.0"
 dependencies = [
  "ariadne",
- "chumsky",
  "lazy_static",
  "num",
+ "syntax",
 ]
 
 [[package]]
@@ -456,6 +456,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syntax"
+version = "0.1.0"
+dependencies = [
+ "chumsky",
 ]
 
 [[package]]
