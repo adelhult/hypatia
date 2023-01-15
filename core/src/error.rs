@@ -12,6 +12,7 @@ pub enum Error {
     InvalidUnitOperation,
     OccupiedName(String),
     Redeclaration(String),
+    ForbiddenName(String),
 }
 
 pub fn report_error(error: Error, src: &str) -> String {
@@ -100,7 +101,10 @@ pub fn report_error(error: Error, src: &str) -> String {
         Error::InvalidUnitOperation => "Invalid unit operation.".to_string(),
         Error::OccupiedName(name) => format!("Occupied name {name}."),
         Error::Redeclaration(name) => {
-            format!("You can't redeclare a variable with the name {name} in same scope.")
+            format!(
+                "You can't redeclare a variable with the name '{name}' in same scope. Try using 'update {name} = ... instead.'"
+            )
         }
+        Error::ForbiddenName(name) => format!("'{name}' is not a valid variable name"),
     }
 }

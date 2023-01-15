@@ -168,7 +168,11 @@ impl Environment {
     }
 
     fn get_var(&self, name: &str) -> Result<Value, Error> {
-        // First check if the identifer is actually a unit.
+        if name == "_" {
+            return Err(Error::ForbiddenName(name.into()));
+        }
+
+        // Check if the identifer is actually a unit.
         // Units used as variable will return a quantity of 1 of that unit.
         if let Ok(unit) = self.get_unit(name) {
             return Ok(Value::Quantity(Quantity {
