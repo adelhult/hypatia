@@ -117,8 +117,12 @@ impl VariableScope {
         })
     }
 
-    fn declare_var(&mut self, name: &str, value: Value) {
+    fn declare_var(&mut self, name: &str, value: Value) -> Result<(), Error> {
+        if self.table.contains_key(name) {
+            return Err(Error::Redeclaration(name.into()));
+        }
         self.table.insert(name.to_string(), value);
+        Ok(())
     }
 
     fn update_var(&mut self, name: &str, value: Value) -> Result<(), Error> {
@@ -202,7 +206,7 @@ impl Environment {
         self.variables
             .lock()
             .unwrap()
-            .declare_var(name, value.clone());
+            .declare_var(name, value.clone())?;
         Ok(())
     }
 

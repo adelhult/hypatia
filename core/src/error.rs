@@ -11,6 +11,7 @@ pub enum Error {
     InvalidType,
     InvalidUnitOperation,
     OccupiedName(String),
+    Redeclaration(String),
 }
 
 pub fn report_error(error: Error, src: &str) -> String {
@@ -98,5 +99,8 @@ pub fn report_error(error: Error, src: &str) -> String {
         Error::InvalidType => "Invalid type.".to_string(),
         Error::InvalidUnitOperation => "Invalid unit operation.".to_string(),
         Error::OccupiedName(name) => format!("Occupied name {name}."),
+        Error::Redeclaration(name) => {
+            format!("You can't redeclare a variable with the name {name} in same scope.")
+        }
     }
 }
