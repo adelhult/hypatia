@@ -1,6 +1,6 @@
 use crate::Error;
 use std::collections::HashSet;
-use syntax::expr::{Expr, Spanned};
+use syntax::expr::{Expr, Scope, Spanned};
 
 /// Before evaluating the Expression tree we do a semantic analysis pass.
 /// This allows us to find some bugs and resolve local variables to avoid scoping issues.
@@ -18,16 +18,18 @@ fn resolve_helper(
         Expr::Error => Ok(()),
         Expr::Literal(_) => Ok(()),
         Expr::Variable(name) => {
+            dbg!(&variables);
             // Go through all the scopes until we find the variable.
             for (i, scope) in variables.iter().rev().enumerate() {
                 if scope.contains(name) {
                     // Replace the variable expression with a resolved
                     // variable expression that remembers which scope to do a lookup in.
-                    *expr = Expr::ResolvedVariable(name.to_string(), i);
+                    *expr = Expr::ResolvedVariable(name.to_string(), Scope::Local(i));
                     return Ok(());
                 }
             }
-            Err(Error::UnknownName(name.to_string()))
+            *expr = Expr::ResolvedVariable(name.to_string(), Scope::Global);
+            return Ok(());
         }
         Expr::ResolvedVariable(_, _) => unreachable!(),
         Expr::VarDeclaration(name, rhs) => {

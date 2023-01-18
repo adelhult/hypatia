@@ -11,7 +11,7 @@ use crate::{
 use std::cmp;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
-use syntax::expr::{BinOp, Literal, NumberLiteral, Spanned, UnaryOp};
+use syntax::expr::{BinOp, Literal, NumberLiteral, Scope, Spanned, UnaryOp};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -141,7 +141,8 @@ impl VariableScope {
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    variables: Arc<Mutex<VariableScope>>,
+    locals: Arc<Mutex<VariableScope>>,
+    globals: Arc<Mutex<HashMap<String, Value>>>,
     units: Arc<Mutex<HashMap<String, Entry<Unit>>>>,
     unit_names:
         Arc<Mutex<HashMap<BTreeMap<BaseUnit, Ratio<i32>>, HashSet<(String, Option<String>)>>>>,
@@ -155,7 +156,8 @@ impl Environment {
 
     pub fn without_prelude() -> Self {
         Self {
-            variables: Arc::new(Mutex::new(VariableScope::new())),
+            locals: Arc::new(Mutex::new(VariableScope::new())),
+            globals: Arc::new(Mutex::new(HashMap::new())),
             units: Arc::new(Mutex::new(HashMap::new())),
             unit_names: Arc::new(Mutex::new(HashMap::new())),
             prefixes: Arc::new(Mutex::new(StringTrie::new())),
@@ -169,7 +171,7 @@ impl Environment {
         self
     }
 
-    fn get_var(&self, name: &str, scope_level: usize) -> Result<Value, Error> {
+    fn get_var(&self, name: &str, scope_level: Scope) -> Result<Value, Error> {
         if name == "_" {
             return Err(Error::ForbiddenName(name.into()));
         }
@@ -183,12 +185,12 @@ impl Environment {
             }));
         }
 
-        // Otherwise go through all of the scopes to find the the variable
-        self.variables
-            .lock()
-            .unwrap()
-            .get_var(name, scope_level)
-            .ok_or_else(|| Error::UnknownName(name.to_string()))
+        let value = match scope_level {
+            Scope::Global => self.globals.lock().unwrap().get(name).cloned(),
+            Scope::Local(level) => self.locals.lock().unwrap().get_var(name, level),
+        };
+
+        value.ok_or_else(|| Error::UnknownName(name.to_string()))
     }
 
     fn update_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -197,10 +199,7 @@ impl Environment {
             return Err(Error::OccupiedName(name.to_string()));
         }
 
-        self.variables
-            .lock()
-            .unwrap()
-            .update_var(name, value.clone())
+        self.locals.lock().unwrap().update_var(name, value.clone())
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -215,7 +214,7 @@ impl Environment {
             return Ok(());
         }
 
-        self.variables
+        self.locals
             .lock()
             .unwrap()
             .declare_var(name, value.clone())?;
@@ -323,21 +322,21 @@ impl Environment {
     }
 
     fn push_scope(&mut self) {
-        let outer_scope = Arc::clone(&self.variables);
+        let outer_scope = Arc::clone(&self.locals);
         let new_scope = VariableScope {
             outer: Some(outer_scope),
             table: HashMap::new(),
         };
 
-        self.variables = Arc::new(Mutex::new(new_scope));
+        self.locals = Arc::new(Mutex::new(new_scope));
     }
 
     fn pop_scope(&mut self) {
-        let outer_scope = match &self.variables.lock().unwrap().outer {
+        let outer_scope = match &self.locals.lock().unwrap().outer {
             Some(outer_scope) => Arc::clone(outer_scope),
             None => panic!("No outer scope"),
         };
-        self.variables = outer_scope;
+        self.locals = outer_scope;
     }
 
     fn declare_prefix(

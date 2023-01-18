@@ -3,7 +3,7 @@ pub enum Expr {
     Error,
     Literal(Literal),
     Variable(String),
-    ResolvedVariable(String, usize),
+    ResolvedVariable(String, Scope),
     VarDeclaration(String, Box<Spanned<Self>>),
     VarUpdate(String, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
@@ -18,6 +18,12 @@ pub enum Expr {
     DerivedUnitDecl(String, Option<String>, Box<Spanned<Self>>),
     PrefixDecl(String, Option<String>, Box<Spanned<Self>>),
     UnaryOp(UnaryOp, Box<Spanned<Expr>>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Scope {
+    Local(usize),
+    Global,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
