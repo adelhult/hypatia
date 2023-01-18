@@ -399,12 +399,15 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             let values: Vec<Result<_, _>> = arguments.iter().map(|arg| eval(arg, env)).collect();
 
             for (name, value) in function.parameters.iter().zip(values.into_iter()) {
-                env.declare_var(name, &value?)?;
+                function.env.declare_var(name, &value?)?;
             }
 
             // Finally, evaluate the function body
             // (note: important to use the environment from the actual closure here)
-            eval(&function.body, &mut function.env)
+            let result = eval(&function.body, &mut function.env);
+            function.env.pop_scope();
+
+            result
         }
 
         Expr::FunctionDecl(name, parameters, body) => {
@@ -415,7 +418,6 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             });
 
             env.declare_var(name, &function)?;
-
             Ok(function)
         }
         Expr::FunctionUpdate(name, parameters, body) => {
