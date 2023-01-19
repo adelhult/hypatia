@@ -102,13 +102,6 @@ struct VariableScope {
 }
 
 impl VariableScope {
-    fn new() -> Self {
-        Self {
-            table: HashMap::new(),
-            outer: None,
-        }
-    }
-
     fn get_var(&self, name: &str, level: usize) -> Option<Value> {
         if level == 0 {
             return self.table.get(name).cloned();
@@ -141,7 +134,7 @@ impl VariableScope {
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    locals: Arc<Mutex<VariableScope>>,
+    locals: Option<Arc<Mutex<VariableScope>>>,
     globals: Arc<Mutex<HashMap<String, Value>>>,
     units: Arc<Mutex<HashMap<String, Entry<Unit>>>>,
     unit_names:
@@ -156,7 +149,7 @@ impl Environment {
 
     pub fn without_prelude() -> Self {
         Self {
-            locals: Arc::new(Mutex::new(VariableScope::new())),
+            locals: None,
             globals: Arc::new(Mutex::new(HashMap::new())),
             units: Arc::new(Mutex::new(HashMap::new())),
             unit_names: Arc::new(Mutex::new(HashMap::new())),
@@ -187,7 +180,13 @@ impl Environment {
 
         let value = match scope_level {
             Scope::Global => self.globals.lock().unwrap().get(name).cloned(),
-            Scope::Local(level) => self.locals.lock().unwrap().get_var(name, level),
+            Scope::Local(level) => self
+                .locals
+                .as_ref()
+                .unwrap()
+                .lock()
+                .unwrap()
+                .get_var(name, level),
         };
 
         value.ok_or_else(|| Error::UnknownName(name.to_string()))
@@ -198,8 +197,14 @@ impl Environment {
         if self.get_unit(name).is_ok() {
             return Err(Error::OccupiedName(name.to_string()));
         }
-
-        self.locals.lock().unwrap().update_var(name, value.clone())
+        // FIXME: fix this once we resolve update expressions
+        // will need to handle both scope::global and scope::local
+        self.locals
+            .as_ref()
+            .unwrap()
+            .lock()
+            .unwrap()
+            .update_var(name, value.clone())
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -214,10 +219,20 @@ impl Environment {
             return Ok(());
         }
 
-        self.locals
-            .lock()
-            .unwrap()
-            .declare_var(name, value.clone())?;
+        // FIXME: check if to use local or global scope
+        match self.locals.as_ref() {
+            Some(local_scope) => local_scope
+                .lock()
+                .unwrap()
+                .declare_var(name, value.clone())?,
+            None => {
+                let mut globals = self.globals.lock().unwrap();
+                if globals.contains_key(name) {
+                    return Err(Error::Redeclaration(name.into()));
+                }
+                globals.insert(name.to_string(), value.clone());
+            }
+        }
         Ok(())
     }
 
@@ -322,21 +337,27 @@ impl Environment {
     }
 
     fn push_scope(&mut self) {
-        let outer_scope = Arc::clone(&self.locals);
+        let previous_scope = self.locals.as_ref().map(|scope| Arc::clone(&scope));
+
         let new_scope = VariableScope {
-            outer: Some(outer_scope),
+            outer: previous_scope,
             table: HashMap::new(),
         };
 
-        self.locals = Arc::new(Mutex::new(new_scope));
+        self.locals = Some(Arc::new(Mutex::new(new_scope)));
     }
 
     fn pop_scope(&mut self) {
-        let outer_scope = match &self.locals.lock().unwrap().outer {
-            Some(outer_scope) => Arc::clone(outer_scope),
-            None => panic!("No outer scope"),
+        self.locals = {
+            let local_scope = self.locals.as_ref().expect("No local scope to pop");
+            let outer_scope = &local_scope.lock().unwrap().outer;
+
+            if let Some(outer) = outer_scope {
+                Some(Arc::clone(&outer))
+            } else {
+                None
+            }
         };
-        self.locals = outer_scope;
     }
 
     fn declare_prefix(

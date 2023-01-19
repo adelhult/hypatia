@@ -18,9 +18,8 @@ fn resolve_helper(
         Expr::Error => Ok(()),
         Expr::Literal(_) => Ok(()),
         Expr::Variable(name) => {
-            dbg!(&variables);
             // Go through all the scopes until we find the variable.
-            for (i, scope) in variables.iter().rev().enumerate() {
+            for (i, scope) in variables.iter().skip(1).rev().enumerate() {
                 if scope.contains(name) {
                     // Replace the variable expression with a resolved
                     // variable expression that remembers which scope to do a lookup in.
