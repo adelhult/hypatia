@@ -239,7 +239,6 @@ impl Environment {
             return Ok(());
         }
 
-        // FIXME: check if to use local or global scope
         match self.locals.as_ref() {
             Some(local_scope) => local_scope
                 .lock()
