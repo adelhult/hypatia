@@ -1,5 +1,5 @@
-use chumsky::{prelude::*, Stream};
 use crate::expr::*;
+use chumsky::{prelude::*, Stream};
 use std::fmt;
 
 // Greatly inspired by the  Chumsky tutorial
@@ -300,9 +300,12 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
 
         // A name can also be reassigned to a function
         // update f(x) = 10 + x
-        let function_update = just(Token::Update)
-            .ignore_then(function)
-            .map(|((name, params), body)| Expr::FunctionUpdate(name, params, Box::new(body)));
+        let function_update =
+            just(Token::Update)
+                .ignore_then(function)
+                .map(|((name, params), body)| {
+                    Expr::FunctionUpdate(name, params, Box::new(body), Scope::Unresolved)
+                });
 
         // General variable assignment syntax
         // x = 20
@@ -314,7 +317,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
         // update x = 20
         let var_update = just(Token::Update)
             .ignore_then(assignment.clone())
-            .map(|(name, value)| Expr::VarUpdate(name, Box::new(value)));
+            .map(|(name, value)| Expr::VarUpdate(name, Box::new(value), Scope::Unresolved));
 
         // Syntax for declaring new variables
         // x = 20
@@ -356,7 +359,7 @@ fn parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone 
             .or(derived_unit_decl)
             .or(base_unit_decl)
             .or(prefix_decl)
-            .or(ident.map(Expr::Variable))
+            .or(ident.map(|name| Expr::Variable(name, Scope::Unresolved)))
             .map_with_span(|expr, span| (expr, span))
             // Expression surrounded with parentheses
             .or(expr

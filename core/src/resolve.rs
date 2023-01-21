@@ -17,20 +17,10 @@ fn resolve_helper(
     match expr {
         Expr::Error => Ok(()),
         Expr::Literal(_) => Ok(()),
-        Expr::Variable(name) => {
-            // Go through all the scopes until we find the variable.
-            for (i, scope) in variables.iter().skip(1).rev().enumerate() {
-                if scope.contains(name) {
-                    // Replace the variable expression with a resolved
-                    // variable expression that remembers which scope to do a lookup in.
-                    *expr = Expr::ResolvedVariable(name.to_string(), Scope::Local(i));
-                    return Ok(());
-                }
-            }
-            *expr = Expr::ResolvedVariable(name.to_string(), Scope::Global);
-            return Ok(());
+        Expr::Variable(name, ref mut scope) => {
+            *scope = find_scope(name, &variables);
+            Ok(())
         }
-        Expr::ResolvedVariable(_, _) => unreachable!(),
         Expr::VarDeclaration(name, rhs) => {
             let current_scope = variables.last_mut().expect("No scope found");
 
@@ -43,8 +33,12 @@ fn resolve_helper(
             resolve_helper(&mut *rhs, variables)?;
             Ok(())
         }
-        // FIXME: should also replace update nodes with ResolvedUpdate to keep track of which scope the variable to update lives in
-        Expr::VarUpdate(_, rhs) => resolve_helper(&mut *rhs, variables),
+        Expr::VarUpdate(name, rhs, ref mut scope) => {
+            resolve_helper(rhs, variables)?;
+
+            *scope = find_scope(name, &variables);
+            Ok(())
+        }
         Expr::Call(func, args) => {
             resolve_helper(&mut *func, variables)?;
             for arg in args {
@@ -98,7 +92,7 @@ fn resolve_helper(
 
             Ok(())
         }
-        Expr::FunctionUpdate(_, params, body) => {
+        Expr::FunctionUpdate(name, params, body, ref mut scope) => {
             variables.push(HashSet::new());
             let function_scope = variables.last_mut().unwrap();
 
@@ -109,6 +103,8 @@ fn resolve_helper(
             resolve_helper(&mut *body, variables)?;
 
             variables.pop();
+
+            *scope = find_scope(name, variables);
 
             Ok(())
         }
@@ -133,4 +129,15 @@ fn resolve_helper(
         }
         Expr::UnaryOp(_, operand) => resolve_helper(&mut *operand, variables),
     }
+}
+
+fn find_scope(name: &str, variables: &Vec<HashSet<String>>) -> Scope {
+    // Note the resolver assumes that names it doesn't find belongs to the global scope
+
+    for (i, scope) in variables.iter().skip(1).rev().enumerate() {
+        if scope.contains(name) {
+            return Scope::Local(i);
+        }
+    }
+    return Scope::Global;
 }

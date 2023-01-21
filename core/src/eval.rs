@@ -120,15 +120,21 @@ impl VariableScope {
         Ok(())
     }
 
-    fn update_var(&mut self, name: &str, value: Value) -> Result<(), Error> {
-        if self.table.contains_key(name) {
+    fn update_var(&mut self, name: &str, level: usize, value: Value) -> Result<(), Error> {
+        if level == 0 {
+            if !self.table.contains_key(name) {
+                return Err(Error::UpdateNonExistentVar(name.to_string()));
+            }
+
             self.table.insert(name.to_string(), value);
-            Ok(())
-        } else if let Some(outer) = self.outer.as_ref() {
-            outer.lock().unwrap().update_var(name, value)
-        } else {
-            Err(Error::UpdateNonExistentVar(name.to_string()))
+            return Ok(());
         }
+
+        if let Some(outer) = self.outer.as_ref() {
+            return outer.lock().unwrap().update_var(name, level - 1, value);
+        }
+
+        Err(Error::UpdateNonExistentVar(name.to_string()))
     }
 }
 
@@ -179,6 +185,7 @@ impl Environment {
         }
 
         let value = match scope_level {
+            Scope::Unresolved => unreachable!(),
             Scope::Global => self.globals.lock().unwrap().get(name).cloned(),
             Scope::Local(level) => self
                 .locals
@@ -192,19 +199,32 @@ impl Environment {
         value.ok_or_else(|| Error::UnknownName(name.to_string()))
     }
 
-    fn update_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
+    fn update_var(&mut self, name: &str, scope_level: Scope, value: &Value) -> Result<(), Error> {
         // Check if this variable name is already used for a unit (which is not allowed)
         if self.get_unit(name).is_ok() {
             return Err(Error::OccupiedName(name.to_string()));
         }
         // FIXME: fix this once we resolve update expressions
         // will need to handle both scope::global and scope::local
-        self.locals
-            .as_ref()
-            .unwrap()
-            .lock()
-            .unwrap()
-            .update_var(name, value.clone())
+        match scope_level {
+            Scope::Local(i) => {
+                self.locals
+                    .as_ref()
+                    .unwrap()
+                    .lock()
+                    .unwrap()
+                    .update_var(name, i, value.clone())
+            }
+            Scope::Global => {
+                let mut globals = self.globals.lock().unwrap();
+                if !globals.contains_key(name) {
+                    return Err(Error::UpdateNonExistentVar(name.to_string()));
+                }
+                globals.insert(name.to_string(), value.clone());
+                Ok(())
+            }
+            Scope::Unresolved => unreachable!(),
+        }
     }
 
     fn declare_var(&mut self, name: &str, value: &Value) -> Result<(), Error> {
@@ -399,9 +419,9 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             env.declare_var(name, &value)?;
             Ok(value)
         }
-        Expr::VarUpdate(name, rhs) => {
+        Expr::VarUpdate(name, rhs, scope_level) => {
             let value = eval(rhs, env)?;
-            env.update_var(name, &value)?;
+            env.update_var(name, *scope_level, &value)?;
             Ok(value)
         }
         Expr::Call(callable, arguments) => {
@@ -440,14 +460,14 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
             env.declare_var(name, &function)?;
             Ok(function)
         }
-        Expr::FunctionUpdate(name, parameters, body) => {
+        Expr::FunctionUpdate(name, parameters, body, scope_level) => {
             let function = Value::Function(Function {
                 parameters: parameters.clone(),
                 body: *body.clone(),
                 env: env.clone(),
             });
 
-            env.update_var(name, &function)?;
+            env.update_var(name, *scope_level, &function)?;
 
             Ok(function)
         }
@@ -547,8 +567,7 @@ pub fn eval((expr, _): &Spanned<Expr>, env: &mut Environment) -> Result<Value, E
                 unit: Unit(scale, base_units),
             }))
         }
-        Expr::ResolvedVariable(name, scope_level) => env.get_var(name, *scope_level),
-        Expr::Variable(_) => panic!("A resolved expression should not have any variable nodes"),
+        Expr::Variable(name, scope_level) => env.get_var(name, *scope_level),
     }
 }
 

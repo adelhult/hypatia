@@ -2,10 +2,9 @@
 pub enum Expr {
     Error,
     Literal(Literal),
-    Variable(String),
-    ResolvedVariable(String, Scope),
+    Variable(String, Scope),
     VarDeclaration(String, Box<Spanned<Self>>),
-    VarUpdate(String, Box<Spanned<Self>>),
+    VarUpdate(String, Box<Spanned<Self>>, Scope),
     Call(Box<Spanned<Self>>, Vec<Spanned<Self>>),
     If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
     Block(Vec<Spanned<Self>>),
@@ -13,7 +12,7 @@ pub enum Expr {
     Conversion(Box<Spanned<Self>>, Box<Spanned<Self>>),
     BinOp(BinOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
     FunctionDecl(String, Vec<String>, Box<Spanned<Self>>),
-    FunctionUpdate(String, Vec<String>, Box<Spanned<Self>>),
+    FunctionUpdate(String, Vec<String>, Box<Spanned<Self>>, Scope),
     BaseUnitDecl(String, Option<String>),
     DerivedUnitDecl(String, Option<String>, Box<Spanned<Self>>),
     PrefixDecl(String, Option<String>, Box<Spanned<Self>>),
@@ -24,6 +23,7 @@ pub enum Expr {
 pub enum Scope {
     Local(usize),
     Global,
+    Unresolved,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
